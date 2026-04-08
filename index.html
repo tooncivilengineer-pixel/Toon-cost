@@ -1,0 +1,1249 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบฐานข้อมูลผลกระทบราคากลาง - อบจ.พิษณุโลก (Cloud Version)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f0fdfa; 
+            color: #1f2937;
+            transition: background-color 0.3s;
+        }
+        .thai-number {
+            font-variant-numeric: tabular-nums;
+        }
+        input, select {
+            transition: all 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.5); 
+            border-color: #0ea5e9;
+        }
+        
+        body.presentation-mode {
+            background-color: #ffffff;
+        }
+        .presentation-mode .no-present {
+            display: none !important;
+        }
+        .presentation-mode input, .presentation-mode select {
+            border: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            pointer-events: none;
+            appearance: none;
+            -webkit-appearance: none;
+            color: inherit !important;
+        }
+        .presentation-mode input::placeholder {
+            color: transparent;
+        }
+        .presentation-mode .present-shadow-none {
+            box-shadow: none !important;
+            border: none !important;
+        }
+
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .print-shadow-none { box-shadow: none; border: none; }
+            input { border: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; width: 100%; }
+            input::placeholder { color: transparent; }
+        }
+    </style>
+</head>
+<body class="py-8 px-4" id="appBody">
+
+    <div class="max-w-6xl mx-auto bg-white p-8 shadow-xl print-shadow-none present-shadow-none rounded-lg border-t-4 border-t-sky-500 transition-all" id="mainContainer">
+        
+        <!-- Header & Action Buttons -->
+        <div class="mb-6 border-b-2 border-sky-600 pb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900"><i class="fa-solid fa-cloud-bolt text-sky-500 mr-2"></i>ระบบฐานข้อมูลผลกระทบราคากลางส่วนกลาง</h1>
+                <p class="text-gray-600 mt-1">เปรียบเทียบความผันผวนของต้นทุนงานก่อสร้าง (เชื่อมต่อ Cloud แบบ Real-time)</p>
+            </div>
+            
+            <div class="no-print flex flex-wrap gap-2 items-center">
+                <div id="editTools" class="flex gap-2 flex-wrap">
+                    <button onclick="window.saveProjectToCloud()" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="บันทึกข้อมูลขึ้นเซิร์ฟเวอร์ส่วนกลาง">
+                        <i class="fa-solid fa-cloud-arrow-up mr-1"></i> บันทึกขึ้นคลาวด์
+                    </button>
+                    <button onclick="window.openProjectModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="เปิดดูรายการโครงการทั้งหมดจากทุกอำเภอ">
+                        <i class="fa-solid fa-folder-tree mr-1"></i> แฟ้มคลาวด์
+                    </button>
+                    <button onclick="window.openMasterSummaryModal()" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="ดูตารางสรุปยอดรวมงบประมาณของทุกโครงการ">
+                        <i class="fa-solid fa-table-list mr-1"></i> สรุปทุกโครงการ
+                    </button>
+                    <div class="w-px h-8 bg-gray-300 mx-1 hidden sm:block"></div>
+                    <button onclick="window.exportCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="ส่งออกตารางเป็นไฟล์ Excel">
+                        <i class="fa-solid fa-file-csv mr-1"></i> Excel
+                    </button>
+                    <button onclick="window.clearAllData()" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="ล้างหน้าจอเพื่อเริ่มโครงการใหม่">
+                        <i class="fa-solid fa-file-circle-plus mr-1"></i> สร้างใหม่
+                    </button>
+                </div>
+
+                <button id="btnTogglePresent" onclick="window.togglePresentation()" class="ml-2 bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded shadow-lg transition transform hover:scale-105">
+                    <i class="fa-solid fa-desktop mr-2"></i> <span>โหมดนำเสนอ</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Project Info -->
+        <div class="mb-6 no-print no-present bg-sky-50 p-4 rounded-lg border border-sky-100 flex flex-wrap md:flex-nowrap items-center gap-4">
+            <div class="w-full md:w-1/4">
+                <label class="block font-bold text-gray-800 mb-1 text-sm">อำเภอ / ผู้จัดทำ:</label>
+                <select id="districtName" class="w-full border border-gray-300 rounded px-3 py-2 text-gray-800 bg-white shadow-sm focus:border-sky-500">
+                    <option value="ส่วนกลาง (กองช่าง อบจ.)">ส่วนกลาง (กองช่าง อบจ.)</option>
+                    <option value="อ.เมืองพิษณุโลก">อ.เมืองพิษณุโลก</option>
+                    <option value="อ.นครไทย">อ.นครไทย</option>
+                    <option value="อ.ชาติตระการ">อ.ชาติตระการ</option>
+                    <option value="อ.บางระกำ">อ.บางระกำ</option>
+                    <option value="อ.บางกระทุ่ม">อ.บางกระทุ่ม</option>
+                    <option value="อ.พรหมพิราม">อ.พรหมพิราม</option>
+                    <option value="อ.วัดโบสถ์">อ.วัดโบสถ์</option>
+                    <option value="อ.วังทอง">อ.วังทอง</option>
+                    <option value="อ.เนินมะปราง">อ.เนินมะปราง</option>
+                </select>
+            </div>
+            <div class="w-full md:w-3/4 relative">
+                <label class="block font-bold text-gray-800 mb-1 text-sm">ชื่อโครงการ (ระบุพิกัดให้ชัดเจน):</label>
+                <input type="text" id="projectName" placeholder="เช่น โครงการก่อสร้างถนน คสล. สายบ้านคลอง..." class="w-full border border-gray-300 rounded px-3 py-2 text-gray-800 bg-white shadow-sm focus:border-sky-500">
+                <span id="saveStatusIndicator" class="absolute right-3 top-9 text-xs font-semibold hidden"></span>
+            </div>
+            <div class="w-16 h-16 flex-shrink-0 flex flex-col items-center justify-center bg-sky-100 text-sky-600 rounded-full shadow-inner border border-sky-200" title="สถานะการเชื่อมต่อฐานข้อมูลส่วนกลาง">
+                <i class="fa-solid fa-server text-xl mb-1"></i>
+                <span id="cloudStatus" class="text-[0.6rem] font-bold leading-none text-center px-1">รอเชื่อมต่อ</span>
+            </div>
+        </div>
+
+        <!-- Present Title -->
+        <div id="presentProjectTitle" class="hidden mb-6 text-center">
+            <h2 class="text-xl font-bold text-sky-800" id="displayProjectName">ชื่อโครงการ...</h2>
+            <p class="text-sm text-gray-600" id="displayDistrictName">ผู้จัดทำ: ...</p>
+        </div>
+
+        <!-- Settings & Template Button -->
+        <div class="mb-4 flex flex-col gap-4 no-print bg-gray-50 p-4 rounded-lg border border-gray-200 present-shadow-none">
+            <div class="flex flex-wrap justify-between items-center gap-4">
+                <div class="flex flex-wrap gap-4">
+                    <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-300 shadow-sm">
+                        <label class="font-semibold text-sm">ราคาน้ำมันเดิม:</label>
+                        <input type="text" id="oldFuelPrice" value="30.33" class="border rounded px-2 py-1 w-20 text-center font-bold text-gray-700" onchange="window.updateHeaders()">
+                        <span class="text-sm text-gray-500">บ./ลิตร</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-white p-2 rounded border border-red-200 shadow-sm">
+                        <label class="font-semibold text-sm text-red-700">ราคาน้ำมันใหม่:</label>
+                        <input type="text" id="newFuelPrice" value="50.29" class="border rounded px-2 py-1 w-20 text-center font-bold text-red-600" onchange="window.updateHeaders()">
+                        <span class="text-sm text-gray-500">บ./ลิตร</span>
+                    </div>
+                </div>
+                
+                <!-- ส่วนสรุปภาพรวม (Dashboard Summary) -->
+                <div class="flex gap-4 items-center bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm ml-auto">
+                    <div class="text-right hidden sm:block">
+                        <div class="text-xs text-gray-500 font-semibold">ผลกระทบภาพรวม</div>
+                        <div id="summaryTotalDiff" class="text-base font-bold text-gray-800">0.00 บาท</div>
+                    </div>
+                    <div id="summaryTotalPercent" class="text-xl font-black text-gray-800 bg-gray-100 px-3 py-1 rounded">0.00%</div>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button onclick="window.openTemplateModal()" class="no-present bg-orange-500 hover:bg-orange-600 text-white font-semibold py-1.5 px-4 rounded shadow-sm transition text-sm">
+                        <i class="fa-solid fa-layer-group mr-1"></i> เทมเพลตส่วนกลาง
+                    </button>
+                    <button onclick="window.addRow()" class="no-present bg-gray-800 hover:bg-gray-900 text-white font-semibold py-1.5 px-4 rounded shadow-sm transition text-sm">
+                        <i class="fa-solid fa-plus mr-1"></i> เพิ่มแถวงาน
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chart -->
+        <div class="mb-6 p-4 bg-white rounded-lg border border-gray-300 shadow-sm hidden md:block present-shadow-none" style="page-break-inside: avoid;">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-200 pb-2">
+                <h2 class="text-lg font-bold text-gray-800 border-l-4 border-sky-500 pl-2">กราฟเปรียบเทียบค่างานต้นทุนแต่ละหมวดงาน</h2>
+                <select id="chartTypeSelector" onchange="window.calculateTotals()" class="border border-gray-300 rounded px-3 py-1 text-sm font-semibold text-gray-700 bg-gray-50 shadow-sm cursor-pointer hover:bg-gray-100 transition no-print no-present">
+                    <option value="bar">📊 แบบแท่ง (Bar Chart)</option>
+                    <option value="line">📈 แบบเส้น (Line Chart)</option>
+                </select>
+            </div>
+            <div class="relative h-[300px] w-full">
+                <canvas id="costChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Table -->
+        <div class="overflow-x-auto rounded-lg border border-gray-300 bg-white present-shadow-none mb-6">
+            <table class="w-full text-left border-collapse" id="mainTable">
+                <thead class="bg-gray-100 text-gray-800 border-b-2 border-gray-300">
+                    <tr>
+                        <th class="p-3 font-semibold border-r border-gray-300 w-[30%]">หมวดงานก่อสร้าง</th>
+                        <th class="p-3 font-semibold text-right border-r border-gray-300 w-1/6">ค่างานเดิม<br><span class="text-xs font-normal text-gray-600" id="headerOldPrice">(น้ำมัน 30.33)</span></th>
+                        <th class="p-3 font-semibold text-right border-r border-gray-300 w-1/6">ค่างานใหม่<br><span class="text-xs font-normal text-red-600" id="headerNewPrice">(น้ำมัน 50.29)</span></th>
+                        <th class="p-3 font-semibold text-right border-r border-gray-300 w-1/6">ส่วนต่างที่เพิ่มขึ้น<br><span class="text-xs font-normal text-gray-600">(บาท / %)</span></th>
+                        <th class="p-3 font-semibold border-r border-gray-300">หมายเหตุ / สาเหตุหลัก</th>
+                        <th class="p-3 font-semibold text-center w-12 no-print no-present">ลบ</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="thai-number divide-y divide-gray-200 text-sm">
+                </tbody>
+                <tfoot class="bg-gray-100 border-t-2 border-gray-400">
+                    <tr>
+                        <td class="p-4 font-bold border-r border-gray-300 text-base text-right">รวมค่างานต้นทุนทั้งสิ้น</td>
+                        <td class="p-4 text-right font-bold border-r border-gray-300 text-base" id="totalOld">0.00</td>
+                        <td class="p-4 text-right font-bold border-r border-gray-300 text-base text-red-700" id="totalNew">0.00</td>
+                        <td class="p-4 text-right font-bold text-red-700 border-r border-gray-300 text-base" id="totalDiff">+0.00</td>
+                        <td class="p-4 border-r border-gray-300 no-print"></td>
+                        <td class="p-4 no-print no-present"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- Master Summary Modal (Cloud Data) -->
+    <div id="masterSummaryModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 no-print">
+        <div class="bg-white rounded-lg p-6 max-w-6xl w-full shadow-2xl transform transition-all flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900"><i class="fa-solid fa-chart-pie text-teal-600 mr-2"></i>ตารางสรุปยอดงบประมาณที่ต้องจัดหาเพิ่ม (ส่วนกลาง)</h3>
+                    <p class="text-sm text-gray-500 mt-1">ข้อมูลถูกดึงมาจากระบบ Cloud แบบ Real-time ครอบคลุมการทำงานของนายช่างทุกอำเภอ</p>
+                </div>
+                <button onclick="window.closeMasterSummaryModal()" class="text-gray-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="overflow-y-auto flex-1 border border-gray-200 rounded-lg mb-6">
+                <table class="w-full text-left border-collapse bg-white" id="masterSummaryTable">
+                    <thead class="bg-teal-50 text-teal-900 border-b-2 border-teal-200 sticky top-0 shadow-sm z-10">
+                        <tr>
+                            <th class="p-3 font-semibold border-r border-teal-200 w-12 text-center">ลำดับ</th>
+                            <th class="p-3 font-semibold border-r border-teal-200 w-1/5">อำเภอ/ผู้จัดทำ</th>
+                            <th class="p-3 font-semibold border-r border-teal-200">ชื่อโครงการ</th>
+                            <th class="p-3 font-semibold text-right border-r border-teal-200 w-[15%]">รวมค่างานเดิม (บาท)</th>
+                            <th class="p-3 font-semibold text-right border-r border-teal-200 w-[15%]">รวมค่างานใหม่ (บาท)</th>
+                            <th class="p-3 font-semibold text-right border-teal-200 w-[18%]">ส่วนเกินที่ต้องหาเพิ่ม</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterSummaryBody" class="thai-number divide-y divide-gray-200 text-sm">
+                        <!-- Data will be populated here -->
+                    </tbody>
+                    <tfoot class="bg-teal-100 border-t-2 border-teal-400 sticky bottom-0 z-10">
+                        <tr>
+                            <td colspan="3" class="p-4 font-bold border-r border-teal-300 text-base text-right text-teal-900">ยอดรวมงบประมาณที่ต้องจัดหาเพิ่มทั้งจังหวัด</td>
+                            <td class="p-4 text-right font-bold border-r border-teal-300 text-base text-gray-700" id="grandTotalOld">0.00</td>
+                            <td class="p-4 text-right font-bold border-r border-teal-300 text-base text-gray-700" id="grandTotalNew">0.00</td>
+                            <td class="p-4 text-right font-bold text-red-700 border-teal-300 text-lg" id="grandTotalDiff">+0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="flex justify-between items-center shrink-0 border-t pt-4">
+                <button onclick="window.exportMasterSummaryCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded shadow-sm transition text-sm">
+                    <i class="fa-solid fa-file-excel mr-1"></i> ส่งออกตารางสรุปภาพรวม (Excel)
+                </button>
+                <button onclick="window.closeMasterSummaryModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded shadow-sm transition text-sm">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Manager Modal (Cloud) -->
+    <div id="projectModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 no-print">
+        <div class="bg-white rounded-lg p-6 max-w-3xl w-full shadow-2xl transform transition-all flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 class="text-xl font-bold text-gray-900"><i class="fa-solid fa-server text-sky-600 mr-2"></i>แฟ้มโครงการบนคลาวด์ส่วนกลาง</h3>
+                <button onclick="window.closeProjectModal()" class="text-gray-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4">ข้อมูลโครงการทั้งหมดที่ถูกบันทึกขึ้นระบบคลาวด์ สามารถเปิดดูและแก้ไขร่วมกันได้แบบ Real-time</p>
+
+            <div class="overflow-y-auto flex-1 pr-2 space-y-3 mb-6" id="projectListContainer">
+                <div class="flex justify-center items-center py-8">
+                    <i class="fa-solid fa-spinner fa-spin text-sky-500 text-2xl mr-2"></i>
+                    <span class="text-gray-500 text-sm">กำลังโหลดข้อมูลจากเซิร์ฟเวอร์...</span>
+                </div>
+            </div>
+
+            <!-- Backup Options (ยังคงไว้เผื่อจำเป็น) -->
+            <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200 shrink-0">
+                <h4 class="font-bold text-indigo-900 mb-2 text-sm"><i class="fa-solid fa-shield-halved mr-1"></i> ระบบส่งออก/นำเข้าข้อมูลแบบ Offline (Backup)</h4>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="window.saveToJson()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1.5 px-3 rounded text-xs transition shadow-sm">
+                        <i class="fa-solid fa-download mr-1"></i> ดาวน์โหลดเป็น .json
+                    </button>
+                    <label class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-1.5 px-3 rounded text-xs transition shadow-sm cursor-pointer">
+                        <i class="fa-solid fa-upload mr-1"></i> อัปโหลดจาก .json
+                        <input type="file" id="fileInputModal" accept=".json" class="hidden" onchange="window.loadFromJson(event); window.closeProjectModal();">
+                    </label>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t text-right shrink-0">
+                <button onclick="window.closeProjectModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded shadow-sm transition text-sm">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Manager Modal (Cloud Shared) -->
+    <div id="templateModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 no-print">
+        <div class="bg-white rounded-lg p-6 max-w-lg w-full shadow-2xl transform transition-all flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 class="text-xl font-bold text-gray-900"><i class="fa-solid fa-layer-group text-orange-500 mr-2"></i>เทมเพลตส่วนกลาง (Shared Templates)</h3>
+                <button onclick="window.closeTemplateModal()" class="text-gray-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="bg-green-50 p-4 rounded-lg border border-green-200 mb-4 shrink-0">
+                <h4 class="font-bold text-gray-800 mb-2 text-sm"><i class="fa-solid fa-file-excel text-green-600 mr-1"></i> นำเข้าข้อมูลด้วย Excel</h4>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="window.downloadExcelTemplate()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded text-sm transition shadow-sm whitespace-nowrap">
+                        <i class="fa-solid fa-download mr-1"></i> โหลดไฟล์เปล่า (.xlsx)
+                    </button>
+                    <label class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded text-sm transition shadow-sm whitespace-nowrap cursor-pointer">
+                        <i class="fa-solid fa-upload mr-1"></i> อัปโหลดจาก Excel
+                        <input type="file" id="excelUploadInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="window.uploadExcelTemplate(event)">
+                    </label>
+                </div>
+            </div>
+
+            <div class="bg-orange-50 p-4 rounded-lg border border-orange-200 mb-6 shrink-0">
+                <h4 class="font-bold text-gray-800 mb-2 text-sm">สร้างเทมเพลตมาตรฐานเก็บไว้บนคลาวด์</h4>
+                <div class="flex gap-2">
+                    <input type="text" id="newTemplateName" placeholder="ตั้งชื่อเทมเพลตมาตรฐาน..." class="flex-1 border rounded px-3 py-2 text-sm text-gray-800 focus:border-orange-500">
+                    <button onclick="window.saveCurrentAsTemplateToCloud()" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded text-sm transition shadow-sm whitespace-nowrap">
+                        <i class="fa-solid fa-cloud-arrow-up mr-1"></i> บันทึกขึ้นระบบ
+                    </button>
+                </div>
+            </div>
+
+            <h4 class="font-bold text-gray-800 mb-2">เทมเพลตที่พร้อมใช้งาน (จากทุกอำเภอ):</h4>
+            <div class="overflow-y-auto flex-1 pr-2 space-y-2" id="templateListContainer">
+                <div class="flex justify-center items-center py-4">
+                    <i class="fa-solid fa-spinner fa-spin text-orange-500 mr-2"></i>
+                    <span class="text-gray-500 text-sm">กำลังโหลดเทมเพลต...</span>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t text-right shrink-0">
+                <button onclick="window.closeTemplateModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded shadow-sm transition text-sm">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Dialog System -->
+    <script>
+        window.showDialog = function(message, isConfirm = false, onConfirm = null) {
+            const dialogId = 'customDialog_' + Date.now();
+            const dialogHtml = `
+            <div id="${dialogId}" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[100] p-4 transition-opacity">
+                <div class="bg-white rounded-lg p-6 max-w-sm w-full shadow-2xl text-center transform transition-transform scale-100">
+                    <div class="text-gray-800 text-lg mb-6 leading-relaxed whitespace-pre-wrap">${message}</div>
+                    <div class="flex justify-center gap-3">
+                        ${isConfirm ? `<button id="btnCancel_${dialogId}" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-6 rounded-lg transition">ยกเลิก</button>` : ''}
+                        <button id="btnConfirm_${dialogId}" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded-lg transition shadow-md">ตกลง</button>
+                    </div>
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', dialogHtml);
+            
+            document.getElementById(`btnConfirm_${dialogId}`).onclick = function() {
+                document.getElementById(dialogId).remove();
+                if(onConfirm) onConfirm(true);
+            };
+            
+            if(isConfirm) {
+                document.getElementById(`btnCancel_${dialogId}`).onclick = function() {
+                    document.getElementById(dialogId).remove();
+                    if(onConfirm) onConfirm(false);
+                };
+            }
+        };
+    </script>
+
+    <!-- Firebase Script Logic as Module -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        window.myChart = null;
+        window.isPresentationMode = false;
+        window.currentProjectId = null;
+        window.cloudProjects = [];
+        window.cloudTemplates = [];
+
+        // ======================================================================
+        // 🔴 1. ตั้งค่า FIREBASE ของท่านที่นี่ (สำหรับการนำไปเปิดบน GitHub Pages) 🔴
+        // ======================================================================
+        // ลบเครื่องหมาย // ด้านหน้าออก แล้วนำโค้ดจาก Firebase Console ของท่านมาวางทับครับ
+        const myCustomFirebaseConfig = {
+            apiKey: "AIzaSyDovtAZBqZeHoeTwcQXvQ77U3bR4RAgjIM",
+            authDomain: "recheck-92d43.firebaseapp.com",
+            projectId: "recheck-92d43",
+            storageBucket: "recheck-92d43.firebasestorage.app",
+            messagingSenderId: "94609751419",
+            appId: "1:94609751419:web:1100cab6d2fc1426d311de"
+        };
+
+        const isCustomConfigSet = Object.keys(myCustomFirebaseConfig).length > 0 && myCustomFirebaseConfig.apiKey;
+        const envConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+        const firebaseConfig = isCustomConfigSet ? myCustomFirebaseConfig : JSON.parse(envConfigStr);
+        
+        const appId = typeof __app_id !== 'undefined' && !isCustomConfigSet ? __app_id : 'cost-app-v1';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+
+        if (Object.keys(firebaseConfig).length > 0) {
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            const initAuth = async () => {
+                try {
+                    if (!isCustomConfigSet && initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch(e) {
+                    console.error("Auth error:", e);
+                    setCloudStatus('error', 'ระบบล่ม/ยังไม่ได้เปิด Auth');
+                }
+            };
+
+            initAuth();
+
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if (user) {
+                    setupRealtimeListener();
+                    setupTemplateListener();
+                } else {
+                    setCloudStatus('offline', 'ออฟไลน์');
+                }
+            });
+        } else {
+            console.warn("ไม่มีรหัส Firebase Config ระบบจะไม่สามารถเชื่อมต่อคลาวด์ได้");
+            setCloudStatus('error', 'ไม่มีรหัสคลาวด์');
+        }
+
+        function setCloudStatus(state, text) {
+            const statusEl = document.getElementById('cloudStatus');
+            const iconEl = statusEl.previousElementSibling;
+            const container = statusEl.parentElement;
+            
+            statusEl.innerText = text;
+            container.className = "w-16 h-16 flex-shrink-0 flex flex-col items-center justify-center rounded-full shadow-inner border transition-colors";
+            
+            if (state === 'connecting') {
+                container.classList.add('bg-yellow-50', 'text-yellow-600', 'border-yellow-200');
+                iconEl.className = "fa-solid fa-rotate fa-spin text-xl mb-1";
+            } else if (state === 'online') {
+                container.classList.add('bg-green-50', 'text-green-600', 'border-green-200');
+                iconEl.className = "fa-solid fa-server text-xl mb-1";
+            } else {
+                container.classList.add('bg-red-50', 'text-red-600', 'border-red-200');
+                iconEl.className = "fa-solid fa-cloud-xmark text-xl mb-1";
+            }
+        }
+
+        // ==========================================
+        // ระบบดึงข้อมูลจาก Cloud (Real-time Listeners)
+        // ==========================================
+        function setupRealtimeListener() {
+            if (!currentUser || !db) return;
+            setCloudStatus('connecting', 'ซิงค์ข้อมูล..');
+
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'cost_breakdown_projects');
+            
+            onSnapshot(colRef, (snapshot) => {
+                window.cloudProjects = [];
+                snapshot.forEach(doc => {
+                    window.cloudProjects.push(doc.data());
+                });
+                
+                setCloudStatus('online', 'ออนไลน์');
+
+                if (!document.getElementById('projectModal').classList.contains('hidden')) {
+                    window.renderProjectList();
+                }
+                if (!document.getElementById('masterSummaryModal').classList.contains('hidden')) {
+                    window.renderMasterSummary();
+                }
+            }, (error) => {
+                console.error("Listen failed: ", error);
+                setCloudStatus('error', 'ซิงค์ล้มเหลว');
+            });
+        }
+
+        function setupTemplateListener() {
+            if (!currentUser || !db) return;
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'cost_templates');
+            
+            onSnapshot(colRef, (snapshot) => {
+                window.cloudTemplates = [];
+                snapshot.forEach(doc => {
+                    window.cloudTemplates.push(doc.data());
+                });
+                if (!document.getElementById('templateModal').classList.contains('hidden')) {
+                    window.renderTemplateList();
+                }
+            }, (error) => {
+                console.error("Template Listen failed");
+            });
+        }
+
+        // ==========================================
+        // ฟังก์ชันบันทึกข้อมูล (Save/Delete to Cloud)
+        // ==========================================
+        window.saveProjectToCloud = async function(silent = false) {
+            if (!currentUser || !db) {
+                window.showDialog("ระบบคลาวด์ยังไม่พร้อมใช้งาน หรือท่านยังไม่ได้ตั้งค่ารหัส Firebase ครับ");
+                return;
+            }
+
+            const projectName = document.getElementById('projectName').value.trim();
+            const districtName = document.getElementById('districtName').value;
+
+            if (!projectName) {
+                if(!silent) {
+                    window.showDialog("กรุณาตั้งชื่อโครงการที่ช่อง 'ชื่อโครงการ' ก่อนกดบันทึกขึ้นเซิร์ฟเวอร์ครับ");
+                    document.getElementById('projectName').focus();
+                }
+                return;
+            }
+
+            const rows = [];
+            document.querySelectorAll('#tableBody tr').forEach(tr => {
+                const taskName = tr.querySelector('td:nth-child(1) input').value;
+                if(taskName.trim() !== '') {
+                    rows.push({
+                        taskName: taskName,
+                        oldCost: window.unformatNumber(tr.querySelector('.old-cost').value),
+                        newCost: window.unformatNumber(tr.querySelector('.new-cost').value),
+                        remark: tr.querySelector('td:nth-child(5) input').value
+                    });
+                }
+            });
+
+            if (rows.length === 0) rows.push({taskName: "", oldCost: 0, newCost: 0, remark: ""});
+
+            const projId = window.currentProjectId || 'proj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+            const projectData = {
+                id: projId,
+                projectName: projectName,
+                districtName: districtName,
+                oldFuelPrice: document.getElementById('oldFuelPrice').value,
+                newFuelPrice: document.getElementById('newFuelPrice').value,
+                chartType: document.getElementById('chartTypeSelector').value,
+                totalCost: document.getElementById('totalNew').innerText, 
+                rows: rows,
+                updatedAt: new Date().toLocaleString('th-TH'),
+                timestamp: Date.now(),
+                ownerUid: currentUser.uid
+            };
+
+            const indicator = document.getElementById('saveStatusIndicator');
+            indicator.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปโหลด...';
+            indicator.className = "absolute right-3 top-9 text-xs text-sky-600 font-semibold";
+            indicator.classList.remove('hidden');
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'cost_breakdown_projects', projId);
+                await setDoc(docRef, projectData);
+                window.currentProjectId = projId;
+
+                if(!silent) {
+                    indicator.innerHTML = '<i class="fa-solid fa-cloud-check"></i> บันทึกขึ้นคลาวด์แล้ว';
+                    indicator.className = "absolute right-3 top-9 text-xs text-green-600 font-semibold";
+                    setTimeout(() => { indicator.classList.add('hidden'); }, 3000);
+                }
+            } catch (err) {
+                console.error("Save failed:", err);
+                indicator.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> บันทึกไม่สำเร็จ';
+                indicator.className = "absolute right-3 top-9 text-xs text-red-600 font-semibold";
+            }
+        };
+
+        window.deleteProjectFromCloud = function(id) {
+            if (!currentUser || !db) return;
+            window.showDialog("⚠️ คำเตือน: คุณแน่ใจหรือไม่ที่จะลบโครงการนี้ทิ้งอย่างถาวร?\n(การลบนี้จะลบข้อมูลออกจากเซิร์ฟเวอร์ส่วนกลาง ทุกคนจะไม่เห็นโครงการนี้อีก)", true, async (confirmed) => {
+                if(!confirmed) return;
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'cost_breakdown_projects', id);
+                    await deleteDoc(docRef);
+                    if (window.currentProjectId === id) window.currentProjectId = null;
+                } catch(e) {
+                    console.error("Delete error: ", e);
+                    window.showDialog("เกิดข้อผิดพลาดในการลบโครงการ");
+                }
+            });
+        };
+
+        window.saveCurrentAsTemplateToCloud = async function() {
+            if (!currentUser || !db) {
+                window.showDialog("ระบบคลาวด์ยังไม่พร้อมใช้งาน");
+                return;
+            }
+
+            const nameInput = document.getElementById('newTemplateName');
+            const templateName = nameInput.value.trim();
+            
+            if (!templateName) {
+                window.showDialog("กรุณาตั้งชื่อเทมเพลตมาตรฐานก่อนบันทึกครับ");
+                nameInput.focus();
+                return;
+            }
+
+            const itemsToSave = [];
+            document.querySelectorAll('#tableBody tr').forEach(tr => {
+                const taskName = tr.querySelector('td:nth-child(1) input').value.trim();
+                const oldCost = window.unformatNumber(tr.querySelector('.old-cost').value);
+                if (taskName !== "") {
+                    itemsToSave.push({ taskName: taskName, oldCost: oldCost });
+                }
+            });
+
+            if (itemsToSave.length === 0) {
+                window.showDialog("ไม่พบรายการในตาราง กรุณาเพิ่มรายการก่อนสร้างเทมเพลตครับ");
+                return;
+            }
+
+            const tplId = 'tpl_' + Date.now();
+            const templateData = {
+                id: tplId,
+                name: templateName,
+                items: itemsToSave,
+                districtName: document.getElementById('districtName').value
+            };
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'cost_templates', tplId);
+                await setDoc(docRef, templateData);
+                nameInput.value = '';
+                window.showDialog(`บันทึกเทมเพลต "${templateName}" เข้าสู่ระบบส่วนกลางแล้วครับ! ทุกอำเภอสามารถนำไปใช้ได้ทันที`);
+            } catch(e) {
+                console.error("Template save error:", e);
+                window.showDialog("เกิดข้อผิดพลาดในการบันทึกเทมเพลต");
+            }
+        };
+
+        window.deleteTemplateFromCloud = function(id) {
+            if (!currentUser || !db) return;
+            window.showDialog("ต้องการลบเทมเพลตมาตรฐานนี้ออกจากเซิร์ฟเวอร์ส่วนกลางใช่หรือไม่?", true, async (confirmed) => {
+                if(!confirmed) return;
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'cost_templates', id);
+                    await deleteDoc(docRef);
+                } catch(e) {
+                    console.error("Delete temp error: ", e);
+                }
+            });
+        };
+
+        // ==========================================
+        // UI Render Functions (อ่านจาก Memory ที่ซิงค์แล้ว)
+        // ==========================================
+        window.renderProjectList = function() {
+            const container = document.getElementById('projectListContainer');
+            
+            if (window.cloudProjects.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8 italic text-sm">ยังไม่มีโครงการในระบบส่วนกลาง กรุณาสร้างและกด "บันทึกขึ้นคลาวด์"</p>';
+                return;
+            }
+
+            const sortedProjects = [...window.cloudProjects].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            container.innerHTML = '';
+            sortedProjects.forEach(proj => {
+                const isActive = (proj.id === window.currentProjectId);
+                const div = document.createElement('div');
+                div.className = `flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border rounded-lg transition ${isActive ? 'bg-sky-50 border-sky-300 shadow-md ring-1 ring-sky-300' : 'bg-white border-gray-200 hover:bg-gray-50'}`;
+                
+                const isCentral = proj.districtName && proj.districtName.includes('ส่วนกลาง');
+                const badgeColor = isCentral ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-700';
+
+                div.innerHTML = `
+                    <div class="mb-3 sm:mb-0 w-full sm:w-2/3 pr-2">
+                        <div class="font-bold text-gray-900 text-lg truncate" title="${proj.projectName}">
+                            ${isActive ? '<i class="fa-solid fa-thumbtack text-sky-500 mr-1 text-sm" title="กำลังเปิดอยู่"></i>' : ''}
+                            ${proj.projectName}
+                        </div>
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-gray-500 mt-1.5">
+                            <span class="px-2 py-0.5 rounded-full ${badgeColor} font-semibold"><i class="fa-solid fa-location-dot mr-1"></i> ${proj.districtName || 'ไม่ระบุอำเภอ'}</span>
+                            <span><i class="fa-regular fa-clock"></i> ${proj.updatedAt}</span>
+                            <span class="font-semibold text-gray-700"><i class="fa-solid fa-coins"></i> ยอดใหม่: ${proj.totalCost} บ.</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto justify-end">
+                        <button onclick="window.loadProjectData('${proj.id}')" class="${isActive ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-sky-100 hover:bg-sky-600 hover:text-white text-sky-700'} font-semibold py-1.5 px-4 rounded text-sm transition" ${isActive ? 'disabled title="กำลังเปิดโครงการนี้อยู่แล้ว"' : ''}>
+                            <i class="fa-solid fa-folder-open mr-1"></i> เปิด
+                        </button>
+                        <button onclick="window.deleteProjectFromCloud('${proj.id}')" class="bg-red-50 hover:bg-red-500 hover:text-white text-red-500 py-1.5 px-3 rounded text-sm transition" title="ลบโครงการออกจากคลาวด์">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        };
+
+        window.renderMasterSummary = function() {
+            const tbody = document.getElementById('masterSummaryBody');
+            
+            if (window.cloudProjects.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500 italic">ยังไม่มีโครงการในระบบส่วนกลาง</td></tr>';
+                document.getElementById('grandTotalOld').innerText = '0.00';
+                document.getElementById('grandTotalNew').innerText = '0.00';
+                document.getElementById('grandTotalDiff').innerText = '+0.00';
+                return;
+            }
+
+            const sortedProjects = [...window.cloudProjects].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            
+            tbody.innerHTML = '';
+            let grandOld = 0;
+            let grandNew = 0;
+
+            sortedProjects.forEach((proj, index) => {
+                let projOld = 0;
+                let projNew = 0;
+                
+                if(proj.rows && proj.rows.length > 0) {
+                    proj.rows.forEach(r => {
+                        projOld += parseFloat(r.oldCost || 0);
+                        projNew += parseFloat(r.newCost || 0);
+                    });
+                }
+                
+                const projDiff = projNew - projOld;
+                const projDiffPercent = projOld > 0 ? (projDiff / projOld) * 100 : 0;
+                
+                grandOld += projOld;
+                grandNew += projNew;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-teal-50 transition';
+                
+                let diffHtml = '';
+                if (projDiff > 0) {
+                    diffHtml = `<div class="text-red-600 font-bold">+${window.formatNumber(projDiff)}</div><div class="text-xs text-red-500">(+${projDiffPercent.toFixed(2)}%)</div>`;
+                } else if (projDiff < 0) {
+                    diffHtml = `<div class="text-green-600 font-bold">${window.formatNumber(projDiff)}</div><div class="text-xs text-green-500">(${projDiffPercent.toFixed(2)}%)</div>`;
+                } else {
+                    diffHtml = `<div class="text-gray-500">-</div>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="p-3 border-r border-gray-200 text-center text-gray-500">${index + 1}</td>
+                    <td class="p-3 border-r border-gray-200"><span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-semibold">${proj.districtName || '-'}</span></td>
+                    <td class="p-3 border-r border-gray-200 font-medium text-gray-800">${proj.projectName || 'ไม่ระบุชื่อ'}</td>
+                    <td class="p-3 border-r border-gray-200 text-right text-gray-600">${window.formatNumber(projOld)}</td>
+                    <td class="p-3 border-r border-gray-200 text-right font-semibold text-gray-800">${window.formatNumber(projNew)}</td>
+                    <td class="p-3 text-right bg-red-50/30">${diffHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const grandDiff = grandNew - grandOld;
+            const grandDiffPercent = grandOld > 0 ? (grandDiff / grandOld) * 100 : 0;
+
+            document.getElementById('grandTotalOld').innerText = window.formatNumber(grandOld);
+            document.getElementById('grandTotalNew').innerText = window.formatNumber(grandNew);
+            
+            const grandTotalDiffEl = document.getElementById('grandTotalDiff');
+            if(grandDiff > 0) {
+                grandTotalDiffEl.innerHTML = `<div>+${window.formatNumber(grandDiff)}</div><div class="text-sm text-red-500">(+${grandDiffPercent.toFixed(2)}%)</div>`;
+                grandTotalDiffEl.className = "p-4 text-right font-bold text-red-700 border-teal-300 text-lg";
+            } else if(grandDiff < 0) {
+                grandTotalDiffEl.innerHTML = `<div>${window.formatNumber(grandDiff)}</div><div class="text-sm text-green-500">(${grandDiffPercent.toFixed(2)}%)</div>`;
+                grandTotalDiffEl.className = "p-4 text-right font-bold text-green-700 border-teal-300 text-lg";
+            } else {
+                grandTotalDiffEl.innerHTML = `0.00`;
+                grandTotalDiffEl.className = "p-4 text-right font-bold text-gray-700 border-teal-300 text-lg";
+            }
+        };
+
+        window.renderTemplateList = function() {
+            const container = document.getElementById('templateListContainer');
+            
+            if (window.cloudTemplates.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4 italic text-sm">ยังไม่มีเทมเพลตส่วนกลาง</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            window.cloudTemplates.forEach(template => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition';
+                
+                const itemCount = template.items ? template.items.length : 0;
+                const authorInfo = template.districtName ? `<span class="text-indigo-500 ml-1">(${template.districtName})</span>` : '';
+
+                div.innerHTML = `
+                    <div>
+                        <div class="font-bold text-gray-800">${template.name} ${authorInfo}</div>
+                        <div class="text-xs text-gray-500">มีรายการมาตรฐานทั้งหมด ${itemCount} รายการ</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="window.loadTemplateData('${template.id}')" class="bg-blue-100 hover:bg-blue-600 hover:text-white text-blue-700 font-semibold py-1 px-3 rounded text-sm transition">
+                            <i class="fa-solid fa-hand-pointer mr-1"></i> เลือกใช้
+                        </button>
+                        <button onclick="window.deleteTemplateFromCloud('${template.id}')" class="bg-red-50 hover:bg-red-500 hover:text-white text-red-500 py-1 px-2 rounded text-sm transition" title="ลบเทมเพลต">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        };
+
+        window.loadProjectData = function(id) {
+            const project = window.cloudProjects.find(p => p.id === id);
+            if (!project) return;
+
+            const executeLoad = () => {
+                window.currentProjectId = project.id; 
+                
+                document.getElementById('projectName').value = project.projectName || '';
+                if(project.districtName) document.getElementById('districtName').value = project.districtName;
+                document.getElementById('oldFuelPrice').value = project.oldFuelPrice || '30.33';
+                document.getElementById('newFuelPrice').value = project.newFuelPrice || '50.29';
+                if (project.chartType) document.getElementById('chartTypeSelector').value = project.chartType;
+                
+                window.updateHeaders();
+
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = ''; 
+                
+                if (project.rows && project.rows.length > 0) {
+                    project.rows.forEach(r => {
+                        window.addRow(r.taskName, r.oldCost, r.newCost, r.remark || '');
+                    });
+                } else {
+                    window.addRow(); 
+                }
+                
+                window.calculateTotals();
+                window.closeProjectModal();
+            };
+
+            if (window.currentProjectId !== id) {
+                window.showDialog(`ระบบจะปิดโครงการปัจจุบัน และดาวน์โหลดข้อมูล "${project.projectName}" จากคลาวด์\n(กรุณาแน่ใจว่าบันทึกงานปัจจุบันแล้ว)`, true, (confirmed) => {
+                    if(confirmed) executeLoad();
+                });
+            } else {
+                executeLoad();
+            }
+        };
+
+        window.loadTemplateData = function(templateId) {
+            const template = window.cloudTemplates.find(t => t.id === templateId);
+            if (!template) return;
+
+            window.showDialog(`ต้องการล้างข้อมูลตารางปัจจุบัน และใช้เทมเพลตมาตรฐาน "${template.name}" ใช่หรือไม่?`, true, (confirmed) => {
+                if(!confirmed) return;
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = ''; 
+
+                if (template.items && template.items.length > 0) {
+                    template.items.forEach(item => {
+                        window.addRow(item.taskName, item.oldCost, '', ''); 
+                    });
+                } else {
+                    window.addRow();
+                }
+
+                window.closeTemplateModal();
+                window.calculateTotals();
+            });
+        };
+
+
+        // ==========================================
+        // General Core & UI Functions 
+        // ==========================================
+        window.openProjectModal = function() {
+            window.renderProjectList();
+            document.getElementById('projectModal').classList.remove('hidden');
+        };
+        window.closeProjectModal = function() {
+            document.getElementById('projectModal').classList.add('hidden');
+        };
+        window.openMasterSummaryModal = function() {
+            if(document.getElementById('projectName').value.trim() !== '') {
+                window.saveProjectToCloud(true);
+            }
+            window.renderMasterSummary();
+            document.getElementById('masterSummaryModal').classList.remove('hidden');
+        };
+        window.closeMasterSummaryModal = function() {
+            document.getElementById('masterSummaryModal').classList.add('hidden');
+        };
+        window.openTemplateModal = function() {
+            window.renderTemplateList();
+            document.getElementById('templateModal').classList.remove('hidden');
+        };
+        window.closeTemplateModal = function() {
+            document.getElementById('templateModal').classList.add('hidden');
+            document.getElementById('newTemplateName').value = '';
+        };
+
+        window.clearAllData = function() {
+            window.showDialog("คุณแน่ใจหรือไม่ที่จะสร้างโครงการใหม่ ข้อมูลบนหน้าจอจะถูกล้าง?\n(หากยังไม่ได้กด 'บันทึกขึ้นคลาวด์' ข้อมูลปัจจุบันจะสูญหาย)", true, (confirmed) => {
+                if(!confirmed) return;
+                window.currentProjectId = null;
+                document.getElementById('projectName').value = '';
+                document.getElementById('oldFuelPrice').value = '30.33';
+                document.getElementById('newFuelPrice').value = '50.29';
+                window.updateHeaders();
+                document.getElementById('chartTypeSelector').value = 'bar';
+                document.getElementById('tableBody').innerHTML = '';
+                window.addRow('', '', '', '');
+                window.calculateTotals();
+            });
+        };
+
+        window.formatNumber = function(num) {
+            if (isNaN(num)) return "0.00";
+            return Number(num).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        window.unformatNumber = function(str) {
+            if (!str) return 0;
+            return parseFloat(String(str).replace(/,/g, '')) || 0;
+        }
+
+        window.updateHeaders = function() {
+            const oldPrice = document.getElementById('oldFuelPrice').value;
+            const newPrice = document.getElementById('newFuelPrice').value;
+            document.getElementById('headerOldPrice').innerText = `(น้ำมัน ${oldPrice})`;
+            document.getElementById('headerNewPrice').innerText = `(น้ำมัน ${newPrice})`;
+            if (window.myChart) window.calculateTotals();
+        };
+
+        window.calculateTotals = function() {
+            let totalOld = 0, totalNew = 0;
+            let chartLabels = [], chartDataOld = [], chartDataNew = [];
+
+            document.querySelectorAll('#tableBody tr').forEach(row => {
+                const oldInput = row.querySelector('.old-cost');
+                const newInput = row.querySelector('.new-cost');
+                const diffCell = row.querySelector('.diff-amount');
+                const taskInput = row.querySelector('td:nth-child(1) input');
+
+                const oldVal = window.unformatNumber(oldInput.value);
+                const newVal = window.unformatNumber(newInput.value);
+                const diff = newVal - oldVal;
+                const diffPercent = oldVal > 0 ? (diff / oldVal) * 100 : 0;
+                
+                const taskName = taskInput && taskInput.value.trim() !== '' ? taskInput.value : 'ไม่ระบุ';
+                chartLabels.push(taskName);
+                chartDataOld.push(oldVal);
+                chartDataNew.push(newVal);
+                
+                if (diff > 0) {
+                    diffCell.innerHTML = `<div class="text-red-600 font-semibold">+${window.formatNumber(diff)}</div><div class="text-xs text-red-500 font-medium">(+${diffPercent.toFixed(2)}%)</div>`;
+                } else if (diff < 0) {
+                    diffCell.innerHTML = `<div class="text-green-600 font-semibold">${window.formatNumber(diff)}</div><div class="text-xs text-green-500 font-medium">(${diffPercent.toFixed(2)}%)</div>`;
+                } else {
+                    diffCell.innerHTML = `<span class="text-gray-500">-</span>`;
+                }
+                totalOld += oldVal;
+                totalNew += newVal;
+            });
+
+            const totalDiff = totalNew - totalOld;
+            const totalDiffPercent = totalOld > 0 ? (totalDiff / totalOld) * 100 : 0;
+            document.getElementById('totalOld').innerText = window.formatNumber(totalOld);
+            document.getElementById('totalNew').innerText = window.formatNumber(totalNew);
+            
+            const totalDiffEl = document.getElementById('totalDiff');
+            const summaryTotalDiffEl = document.getElementById('summaryTotalDiff');
+            const summaryTotalPercentEl = document.getElementById('summaryTotalPercent');
+
+            if (totalDiff > 0) {
+                totalDiffEl.innerHTML = `<div>+${window.formatNumber(totalDiff)}</div><div class="text-sm">(+${totalDiffPercent.toFixed(2)}%)</div>`;
+                totalDiffEl.className = "p-4 text-right font-bold text-red-700 border-r border-gray-300 text-base";
+                if(summaryTotalDiffEl) {
+                    summaryTotalDiffEl.innerHTML = `+${window.formatNumber(totalDiff)} บาท`;
+                    summaryTotalDiffEl.className = "text-base font-bold text-red-600";
+                }
+                if(summaryTotalPercentEl) {
+                    summaryTotalPercentEl.innerHTML = `+${totalDiffPercent.toFixed(2)}%`;
+                    summaryTotalPercentEl.className = "text-xl font-black text-white bg-red-500 px-3 py-1 rounded shadow-sm";
+                }
+            } else if (totalDiff < 0) {
+                totalDiffEl.innerHTML = `<div>${window.formatNumber(totalDiff)}</div><div class="text-sm">(${totalDiffPercent.toFixed(2)}%)</div>`;
+                totalDiffEl.className = "p-4 text-right font-bold text-green-700 border-r border-gray-300 text-base";
+                if(summaryTotalDiffEl) {
+                    summaryTotalDiffEl.innerHTML = `${window.formatNumber(totalDiff)} บาท`;
+                    summaryTotalDiffEl.className = "text-base font-bold text-green-600";
+                }
+                if(summaryTotalPercentEl) {
+                    summaryTotalPercentEl.innerHTML = `${totalDiffPercent.toFixed(2)}%`;
+                    summaryTotalPercentEl.className = "text-xl font-black text-white bg-green-500 px-3 py-1 rounded shadow-sm";
+                }
+            } else {
+                totalDiffEl.innerHTML = "0.00";
+                totalDiffEl.className = "p-4 text-right font-bold text-gray-700 border-r border-gray-300 text-base";
+                if(summaryTotalDiffEl) {
+                    summaryTotalDiffEl.innerHTML = `0.00 บาท`;
+                    summaryTotalDiffEl.className = "text-base font-bold text-gray-600";
+                }
+                if(summaryTotalPercentEl) {
+                    summaryTotalPercentEl.innerHTML = `0.00%`;
+                    summaryTotalPercentEl.className = "text-xl font-black text-gray-700 bg-gray-200 px-3 py-1 rounded shadow-sm";
+                }
+            }
+            
+            window.updateChart(chartLabels, chartDataOld, chartDataNew);
+        };
+
+        window.updateChart = function(labels, dataOld, dataNew) {
+            const ctx = document.getElementById('costChart');
+            if (!ctx) return;
+            const oldPriceLabel = document.getElementById('oldFuelPrice').value;
+            const newPriceLabel = document.getElementById('newFuelPrice').value;
+            const selectedChartType = document.getElementById('chartTypeSelector').value;
+            const isLine = selectedChartType === 'line';
+
+            if (window.myChart) window.myChart.destroy();
+            window.myChart = new Chart(ctx.getContext('2d'), {
+                type: selectedChartType,
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'ค่างานเดิม (น้ำมัน ' + oldPriceLabel + ')', data: dataOld, backgroundColor: isLine?'rgba(107,114,128,0.2)':'rgba(107,114,128,0.8)', borderColor: 'rgb(75,85,99)', borderWidth: 2, fill: isLine, tension: 0.3, pointRadius: isLine?4:0 },
+                        { label: 'ค่างานใหม่ (น้ำมัน ' + newPriceLabel + ')', data: dataNew, backgroundColor: isLine?'rgba(14,165,233,0.2)':'rgba(14,165,233,0.8)', borderColor: 'rgb(2,132,199)', borderWidth: 2, fill: '-1', tension: 0.3, pointRadius: isLine?4:0 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                    scales: { y: { beginAtZero: true, ticks: { callback: v => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : (v>=1000 ? (v/1000).toFixed(0)+'k' : v) } } }
+                }
+            });
+        };
+
+        window.handleNumberInput = function(inputEl) {
+            inputEl.addEventListener('focus', function() {
+                let val = window.unformatNumber(this.value);
+                this.value = val === 0 ? '' : val;
+                this.select();
+            });
+            inputEl.addEventListener('blur', function() {
+                let val = window.unformatNumber(this.value);
+                this.value = window.formatNumber(val);
+                window.calculateTotals();
+            });
+            inputEl.addEventListener('input', function() { window.calculateTotals(); });
+        }
+
+        window.addRow = function(taskName = '', oldCost = '', newCost = '', remark = '') {
+            const tbody = document.getElementById('tableBody');
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50 group bg-white';
+            tr.innerHTML = `
+                <td class="p-2 border-r border-gray-200"><input type="text" placeholder="ระบุหมวดงาน..." value="${taskName}" class="w-full p-2 border border-gray-200 rounded focus:border-sky-500 bg-transparent"></td>
+                <td class="p-2 border-r border-gray-200"><input type="text" placeholder="0.00" value="${oldCost !== '' ? window.formatNumber(oldCost) : ''}" class="old-cost w-full p-2 border border-gray-200 rounded text-right font-mono focus:border-sky-500 bg-transparent"></td>
+                <td class="p-2 border-r border-gray-200"><input type="text" placeholder="0.00" value="${newCost !== '' ? window.formatNumber(newCost) : ''}" class="new-cost w-full p-2 border border-gray-200 rounded text-right font-mono text-red-700 focus:border-sky-500 bg-transparent"></td>
+                <td class="p-3 text-right border-r border-gray-200 diff-amount align-middle bg-gray-50/50"><span class="text-gray-500">-</span></td>
+                <td class="p-2 border-r border-gray-200"><input type="text" placeholder="ระบุสาเหตุ (ถ้ามี)..." value="${remark}" class="w-full p-2 border border-gray-200 rounded text-gray-600 focus:border-sky-500 bg-transparent"></td>
+                <td class="p-2 text-center no-print no-present align-middle"><button onclick="this.closest('tr').remove(); window.calculateTotals();" class="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition opacity-50 group-hover:opacity-100"><i class="fa-solid fa-trash-can"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+            window.handleNumberInput(tr.querySelector('.old-cost'));
+            window.handleNumberInput(tr.querySelector('.new-cost'));
+            window.calculateTotals();
+        };
+
+        window.togglePresentation = function() {
+            window.isPresentationMode = !window.isPresentationMode;
+            const body = document.getElementById('appBody');
+            const btn = document.getElementById('btnTogglePresent');
+            const editTools = document.getElementById('editTools');
+            const titleBox = document.getElementById('presentProjectTitle');
+            const projInput = document.getElementById('projectName');
+            const distInput = document.getElementById('districtName');
+            
+            if (window.isPresentationMode) {
+                body.classList.add('presentation-mode');
+                editTools.classList.add('hidden');
+                btn.classList.replace('bg-gray-800', 'bg-red-600');
+                btn.classList.replace('hover:bg-gray-900', 'hover:bg-red-700');
+                btn.innerHTML = '<i class="fa-solid fa-pen-to-square mr-2"></i> <span>ออกจากการนำเสนอ</span>';
+                if (projInput.value.trim() !== '') {
+                    document.getElementById('displayProjectName').innerText = "โครงการ: " + projInput.value;
+                    document.getElementById('displayDistrictName').innerText = "ผู้จัดทำ: " + distInput.value;
+                    titleBox.classList.remove('hidden');
+                }
+            } else {
+                body.classList.remove('presentation-mode');
+                editTools.classList.remove('hidden');
+                btn.classList.replace('bg-red-600', 'bg-gray-800');
+                btn.classList.replace('hover:bg-red-700', 'hover:bg-gray-900');
+                btn.innerHTML = '<i class="fa-solid fa-desktop mr-2"></i> <span>โหมดนำเสนอ</span>';
+                titleBox.classList.add('hidden');
+            }
+            if (window.myChart) window.myChart.resize();
+        };
+
+        // --- Export Functions ---
+        window.exportCSV = function() {
+            const projectName = document.getElementById('projectName').value.trim() || 'Cost_Breakdown';
+            let csvContent = "\uFEFFชื่อโครงการ," + projectName + "\n";
+            document.querySelectorAll('#tableBody tr').forEach(tr => {
+                const task = tr.querySelector('td:nth-child(1) input').value;
+                const oldC = window.unformatNumber(tr.querySelector('.old-cost').value);
+                const newC = window.unformatNumber(tr.querySelector('.new-cost').value);
+                csvContent += `"${task}",${oldC},${newC}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${projectName}.csv`;
+            link.click();
+        };
+
+        window.exportMasterSummaryCSV = function() {
+            if (window.cloudProjects.length === 0) { window.showDialog('ไม่มีข้อมูล'); return; }
+            let csvContent = "\uFEFFตารางสรุปงบประมาณที่ต้องจัดหาเพิ่ม (ส่วนกลาง)\n\nลำดับ,อำเภอ,ชื่อโครงการ,ค่างานเดิม,ค่างานใหม่,ส่วนเกิน\n";
+            let grandOld=0, grandNew=0;
+            [...window.cloudProjects].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0)).forEach((proj, i) => {
+                let pOld=0, pNew=0;
+                (proj.rows||[]).forEach(r=>{ pOld+=parseFloat(r.oldCost||0); pNew+=parseFloat(r.newCost||0); });
+                grandOld+=pOld; grandNew+=pNew;
+                csvContent += `${i+1},"${proj.districtName}","${proj.projectName}",${pOld},${pNew},${pNew-pOld}\n`;
+            });
+            csvContent += `รวมทั้งสิ้น,,,${grandOld},${grandNew},${grandNew-grandOld}\n`;
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
+            link.download = `สรุปงบประมาณส่วนกลาง.csv`;
+            link.click();
+        };
+
+        window.downloadExcelTemplate = function() {
+            const ws_data = [
+                ["รายการ", "ราคาเดิม"],
+                ["หมวดงานดิน (Earth Work)", 1000000],
+                ["หมวดงานรองพื้นทางและพื้นทาง", 2500000],
+                ["หมวดงานผิวทางลาดยาง", 1500000],
+                ["(คัดลอกรายการมาวางต่อบรรทัดนี้ได้เลย...)", ""]
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            ws['!cols'] = [{ wch: 50 }, { wch: 20 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Template");
+            XLSX.writeFile(wb, "เทมเพลต_ค่างานต้นทุน.xlsx");
+        };
+
+        window.uploadExcelTemplate = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                    if (json.length === 0) {
+                        window.showDialog("ไม่พบข้อมูลในไฟล์ Excel ครับ");
+                        event.target.value = '';
+                        return;
+                    }
+
+                    window.showDialog("ต้องการล้างข้อมูลตารางปัจจุบัน และนำเข้ารายการจาก Excel ใช่หรือไม่?", true, (confirmed) => {
+                        if(!confirmed) {
+                            event.target.value = '';
+                            return;
+                        }
+
+                        const tbody = document.getElementById('tableBody');
+                        tbody.innerHTML = '';
+
+                        let rowCount = 0;
+                        json.forEach(row => {
+                            const keys = Object.keys(row);
+                            const taskName = row['รายการ'] || row['รายการ '] || (keys[0] ? row[keys[0]] : '');
+                            const oldCostRaw = row['ราคาเดิม'] || row[' ราคาเดิม'] || (keys[1] ? row[keys[1]] : '');
+                            const oldCost = String(oldCostRaw).replace(/[^0-9.-]+/g,"");
+
+                            if (taskName && !taskName.includes("คัดลอกรายการมาวาง")) {
+                                window.addRow(taskName, oldCost, '', '');
+                                rowCount++;
+                            }
+                        });
+                        
+                        if (rowCount === 0) window.addRow(); 
+                        
+                        window.closeTemplateModal();
+                        event.target.value = '';
+                        window.calculateTotals();
+                        window.showDialog(`นำเข้าข้อมูลจาก Excel สำเร็จจำนวน ${rowCount} รายการ`);
+                    });
+                } catch (error) {
+                    window.showDialog("เกิดข้อผิดพลาดในการอ่านไฟล์ Excel ครับ: " + error.message);
+                    event.target.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        // Offline Fallback for JSON
+        window.saveToJson = function() {
+            const data = { appType: "OBj_Cost_Breakdown", rows: [] };
+            document.querySelectorAll('#tableBody tr').forEach(tr => {
+                data.rows.push({
+                    taskName: tr.querySelector('td:nth-child(1) input').value,
+                    oldCost: window.unformatNumber(tr.querySelector('.old-cost').value),
+                    newCost: window.unformatNumber(tr.querySelector('.new-cost').value),
+                    remark: tr.querySelector('td:nth-child(5) input').value
+                });
+            });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type:"application/json"}));
+            link.download = `Backup.json`; link.click();
+        };
+        
+        window.loadFromJson = function(e) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const data = JSON.parse(ev.target.result);
+                document.getElementById('tableBody').innerHTML = '';
+                data.rows.forEach(r => window.addRow(r.taskName, r.oldCost, r.newCost, r.remark));
+                window.calculateTotals();
+            };
+            reader.readAsText(e.target.files[0]);
+            e.target.value='';
+        };
+
+        window.onload = function() {
+            window.updateHeaders();
+            window.addRow('1. หมวดงานดิน (Earth Work)', 2000000, 2600000, 'ค่าดำเนินการเครื่องจักรเพิ่ม');
+            window.addRow('2. หมวดงานรองพื้นทาง/พื้นทาง', 3500000, 4200000, 'ค่าขนส่งวัสดุเพิ่ม');
+            window.calculateTotals(); 
+        };
+    </script>
+</body>
+</html>
