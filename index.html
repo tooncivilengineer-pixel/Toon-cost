@@ -70,7 +70,7 @@
             
             /* โหมดพิมพ์หน้าจอหลัก */
             body:not(.print-modal-only):not(.print-k-value) .no-print { display: none !important; }
-            body:not(.print-modal-only):not(.print-k-value) #masterSummaryModal, body:not(.print-modal-only):not(.print-k-value) #kValueModal, body:not(.print-modal-only):not(.print-k-value) #kIndexAdminModal { display: none !important; }
+            body:not(.print-modal-only):not(.print-k-value) #masterSummaryModal, body:not(.print-modal-only):not(.print-k-value) #kValueModal, body:not(.print-modal-only):not(.print-k-value) #kIndexAdminModal, body:not(.print-modal-only):not(.print-k-value) #kIndexTableModal { display: none !important; }
             body:not(.print-modal-only):not(.print-k-value) .print-shadow-none { box-shadow: none; border: none; }
             body:not(.print-modal-only):not(.print-k-value) input { border: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; width: 100%; }
             body:not(.print-modal-only):not(.print-k-value) input::placeholder { color: transparent; }
@@ -104,6 +104,7 @@
             body.print-k-value #mainContainer, 
             body.print-k-value #masterSummaryModal, 
             body.print-k-value #kIndexAdminModal, 
+            body.print-k-value #kIndexTableModal,
             body.print-k-value #projectModal { display: none !important; }
             
             body.print-k-value #kValueModal {
@@ -226,22 +227,43 @@
             <p class="text-sm text-gray-600" id="displayDistrictName">ผู้จัดทำ: ...</p>
         </div>
 
-        <!-- Settings -->
+        <!-- Settings & Template Button -->
         <div class="mb-4 flex flex-col gap-4 no-print bg-gray-50 p-4 rounded-lg border border-gray-200 present-shadow-none">
             <div class="flex flex-wrap justify-between items-center gap-4">
-                <div class="flex flex-wrap gap-4">
-                    <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-300 shadow-sm">
+                <div class="flex flex-wrap gap-4 items-center">
+                    <!-- 🌟 เพิ่ม datalist สำหรับประวัติราคาน้ำมัน 🌟 -->
+                    <datalist id="fuelHistory"></datalist>
+
+                    <div class="flex items-center gap-2 bg-white p-2 rounded border border-gray-300 shadow-sm relative">
                         <label class="font-semibold text-sm">ราคาน้ำมันเดิม:</label>
-                        <input type="text" id="oldFuelPrice" value="30.33" class="border rounded px-2 py-1 w-20 text-center font-bold text-gray-700" onchange="window.updateHeaders()">
+                        <input type="text" id="oldFuelPrice" value="30.33" list="fuelHistory" class="border rounded px-2 py-1 w-20 text-center font-bold text-gray-700 cursor-pointer focus:ring-2 focus:ring-sky-200" onchange="window.updateHeaders()" autocomplete="off" title="คลิกเพื่อเลือกจากประวัติ">
                         <span class="text-sm text-gray-500">บ./ลิตร</span>
                     </div>
-                    <div class="flex items-center gap-2 bg-white p-2 rounded border border-red-200 shadow-sm">
+                    
+                    <div class="flex items-center gap-2 bg-white p-2 rounded border border-red-200 shadow-sm relative group">
                         <label class="font-semibold text-sm text-red-700">ราคาน้ำมันใหม่:</label>
-                        <input type="text" id="newFuelPrice" value="50.29" class="border rounded px-2 py-1 w-20 text-center font-bold text-red-600" onchange="window.updateHeaders()">
+                        <input type="text" id="newFuelPrice" value="50.29" list="fuelHistory" class="border rounded px-2 py-1 w-20 text-center font-bold text-red-600 focus:border-red-500 focus:ring-1 focus:ring-red-200 cursor-pointer" onchange="window.updateHeaders()" autocomplete="off" title="คลิกเพื่อเลือกจากประวัติ">
                         <span class="text-sm text-gray-500">บ./ลิตร</span>
+                        
+                        <div class="border-l border-gray-300 mx-1 h-6"></div>
+                        
+                        <select id="fuelProvince" class="border border-gray-300 rounded px-1 py-1 text-[0.7rem] text-gray-700 focus:border-red-500 bg-gray-50">
+                            <option value="กรุงเทพมหานคร">กทม.</option>
+                            <option value="พิษณุโลก" selected>พิษณุโลก</option>
+                            <option value="สุโขทัย">สุโขทัย</option>
+                            <option value="อุตรดิตถ์">อุตรดิตถ์</option>
+                            <option value="พิจิตร">พิจิตร</option>
+                            <option value="เพชรบูรณ์">เพชรบูรณ์</option>
+                            <option value="กำแพงเพชร">กำแพงเพชร</option>
+                            <option value="นครสวรรค์">นครสวรรค์</option>
+                        </select>
+                        <button id="btnFetchFuel" onclick="window.checkProvincialFuel()" class="text-[0.7rem] bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold py-1.5 px-2 rounded transition shadow-sm flex items-center border border-red-200 hover:border-red-600" title="เช็คราคาน้ำมันจากเว็บไซต์ ปตท.">
+                            <i class="fa-solid fa-gas-pump mr-1"></i>เช็คเว็บ ปตท.
+                        </button>
                     </div>
                 </div>
                 
+                <!-- ส่วนสรุปภาพรวม (Dashboard Summary) -->
                 <div class="flex gap-4 items-center bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm ml-auto">
                     <div class="text-right hidden sm:block">
                         <div class="text-xs text-gray-500 font-semibold">ผลกระทบภาพรวม</div>
@@ -317,8 +339,32 @@
                 </tfoot>
             </table>
         </div>
-    </div>
 
+        <!-- 🌟 บทวิเคราะห์เศรษฐศาสตร์หน้าหลัก (Main Page Eco Summary) 🌟 -->
+        <div id="mainPageEcoCard" class="bg-white p-6 rounded-lg shadow-md border-t-4 border-indigo-500 mb-6 print-shadow-none transition-all">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-200 pb-3 mb-4 gap-4">
+                <h2 class="text-xl font-bold text-indigo-900 flex items-center">
+                    <i class="fa-solid fa-chart-pie mr-2 text-indigo-600"></i> สรุปบทวิเคราะห์ความคุ้มค่าโครงการ (Executive Summary)
+                </h2>
+                <div class="text-right hidden" id="mainPageEcoGapContainer">
+                    <div class="text-xs text-gray-500 font-bold">ช่องว่างส่วนต่าง (Risk Gap)</div>
+                    <div class="text-xl font-black text-indigo-700 thai-number" id="mainPageEcoGap">0.00 บาท</div>
+                </div>
+            </div>
+            
+            <div id="mainPageEcoContent">
+                <!-- เนื้อหาจะถูกสร้างด้วย JS -->
+                <div class="text-center p-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                    <i class="fa-solid fa-calculator text-4xl text-gray-300 mb-3"></i>
+                    <p class="text-gray-500 mb-3">ระบบยังไม่มีข้อมูลค่า K กรุณาคำนวณค่า K เพื่อแสดงบทวิเคราะห์เศรษฐศาสตร์</p>
+                    <button onclick="window.openKValueModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-full shadow-md transition">
+                        <i class="fa-solid fa-bolt mr-1"></i> เปิดเครื่องมือคำนวณค่า K
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
 
     <!-- 🌟 ส่วนที่ 2: หน้าต่างสรุปทุกโครงการ (Master Summary) 🌟 -->
     <div id="masterSummaryModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50">
@@ -419,7 +465,7 @@
                     <button onclick="window.saveToJson()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1.5 px-3 rounded text-xs transition shadow-sm">
                         <i class="fa-solid fa-download mr-1"></i> ดาวน์โหลดเป็น .json
                     </button>
-                    <label class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-1.5 px-3 rounded text-xs transition shadow-sm cursor-pointer">
+                    <label class="bg-indigo-50 hover:bg-indigo-600 text-white font-semibold py-1.5 px-3 rounded text-xs transition shadow-sm cursor-pointer">
                         <i class="fa-solid fa-upload mr-1"></i> อัปโหลดจาก .json
                         <input type="file" id="fileInputModal" accept=".json" class="hidden" onchange="window.loadFromJson(event); window.closeProjectModal();">
                     </label>
@@ -647,7 +693,7 @@
                         </div>
                     </div>
 
-                    <!-- 🌟 ส่วนวิเคราะห์ทางเศรษฐศาสตร์ (เพิ่มใหม่) 🌟 -->
+                    <!-- 🌟 ส่วนวิเคราะห์ทางเศรษฐศาสตร์ 🌟 -->
                     <div class="bg-indigo-50 p-5 rounded-xl shadow-sm border border-indigo-200 mt-6 no-print hidden" id="economicAnalysisCard">
                         <div class="flex items-center mb-3">
                             <i class="fa-solid fa-chart-line text-indigo-600 text-xl mr-2"></i>
@@ -672,11 +718,11 @@
                         </div>
 
                         <div class="bg-white p-4 rounded-lg shadow-inner border-l-4 border-indigo-500">
-                            <div class="flex justify-between items-end mb-1">
+                            <div class="flex justify-between items-end mb-1 border-b border-gray-200 pb-2">
                                 <span class="text-sm font-bold text-gray-800">ช่องว่างส่วนต่าง (Risk Gap):</span>
                                 <span class="text-2xl font-black thai-number text-indigo-700" id="ecoGapValue">0.00 บาท</span>
                             </div>
-                            <p class="text-sm font-semibold mt-2" id="ecoConclusionText">- รอการประมวลผล -</p>
+                            <div id="ecoConclusionText" class="mt-2 text-sm">- รอการประมวลผล -</div>
                         </div>
                     </div>
                     <!-- สิ้นสุดส่วนวิเคราะห์ทางเศรษฐศาสตร์ -->
@@ -739,7 +785,12 @@
                     <span id="adminDbStatus" class="text-sm font-semibold text-gray-500">รอเลือกเดือน...</span>
                 </div>
                 
-                <div class="flex gap-2">
+                <div class="flex gap-2 flex-wrap">
+                    <!-- 🌟 ปุ่มเปิดตารางข้อมูลดัชนีทั้งหมด 🌟 -->
+                    <button onclick="window.openKIndexTableModal()" class="text-xs bg-blue-100 hover:bg-blue-600 hover:text-white text-blue-700 font-semibold py-1.5 px-3 rounded transition shadow-sm">
+                        <i class="fa-solid fa-table-list mr-1"></i> ตารางดัชนีทั้งหมด
+                    </button>
+
                     <button onclick="window.downloadKIndexExcelTemplate()" class="text-xs bg-green-100 hover:bg-green-600 hover:text-white text-green-700 font-semibold py-1.5 px-3 rounded transition shadow-sm">
                         <i class="fa-solid fa-file-excel mr-1"></i> โหลดฟอร์ม Excel
                     </button>
@@ -765,6 +816,52 @@
                         <i class="fa-solid fa-cloud-arrow-up mr-1"></i> บันทึกข้อมูลขึ้น Cloud
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🌟 ส่วนที่ 6: หน้าต่างตารางฐานข้อมูลดัชนีทั้งหมด 🌟 -->
+    <div id="kIndexTableModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-[80] no-print">
+        <div class="bg-white rounded-lg p-6 max-w-full w-[95%] shadow-2xl transform transition-all flex flex-col max-h-[95vh]">
+            <div class="flex justify-between items-center mb-4 border-b pb-2 shrink-0">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900"><i class="fa-solid fa-table-list text-blue-600 mr-2"></i>ภาพรวมฐานข้อมูลดัชนีพาณิชย์ (All Indices Database)</h3>
+                    <p class="text-sm text-gray-500 mt-1">ตรวจสอบความครบถ้วนของข้อมูลที่นำเข้า หากช่องใดขึ้น<span class="text-red-500 font-bold bg-red-50 px-1 rounded mx-1">- สีแดง</span>แสดงว่าข้อมูลไม่ครบถ้วน</p>
+                </div>
+                <button onclick="window.closeKIndexTableModal()" class="text-gray-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="overflow-auto flex-1 border border-gray-300 rounded-lg">
+                <table class="w-full text-left border-collapse text-xs md:text-sm whitespace-nowrap">
+                    <thead class="bg-gray-100 text-gray-800 border-b-2 border-gray-300 sticky top-0 z-10 shadow-sm">
+                        <tr>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold sticky left-0 bg-gray-100 z-20">เดือน-ปี</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold" title="ดัชนีราคาวัสดุก่อสร้าง">M</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold" title="ดัชนีราคาแอสฟัลท์">A</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold" title="ดัชนีราคาเหล็ก">S</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold" title="ดัชนีราคาเครื่องจักรกลฯ">E</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold" title="ดัชนีราคาซีเมนต์">C</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold" title="ดัชนีราคาท่อเหล็กอาบสังกะสี">GIP</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold" title="ดัชนีราคาเหล็กแผ่นเรียบ">G</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold" title="ดัชนีราคาท่อซีเมนต์ใยหิน">AC</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold" title="ดัชนีราคาผู้บริโภค">I</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold" title="ดัชนีราคาท่อ PVC">PVC</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold text-red-600" title="ดัชนีราคาน้ำมันดีเซล">F</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold" title="ดัชนีราคาสายไฟฟ้า">W</th>
+                            <th class="p-2 border-r border-gray-300 text-center font-bold" title="ดัชนีราคาท่อ HDPE">PE</th>
+                            <th class="p-2 text-center font-bold sticky right-0 bg-gray-100 z-20 shadow-[-2px_0_5px_rgba(0,0,0,0.05)]">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="thai-number divide-y divide-gray-200" id="kIndexTableBody">
+                        <!-- JS will populate -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end pt-4 shrink-0">
+                <button onclick="window.closeKIndexTableModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded shadow-sm transition text-sm">
+                    ปิดตาราง
+                </button>
             </div>
         </div>
     </div>
@@ -807,13 +904,16 @@
         import { getAuth, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // ประกาศตัวแปร Global
         window.myChart = null;
-        window.ecoChart = null; // 🌟 ประกาศตัวแปรสำหรับกราฟวิเคราะห์เศรษฐศาสตร์ 🌟
+        window.ecoChart = null; 
         window.isPresentationMode = false;
         window.currentProjectId = null;
         window.cloudProjects = [];
         window.cloudKIndices = {}; 
-        window.savedKValueItems = []; // เก็บสถานะรายการในตารางค่า K
+        window.savedKValueItems = []; 
+        window.globalNetCostDiff = 0;
+        window.globalKCompensation = null;
 
         // ======================================================================
         // 🔴 1. ตั้งค่า FIREBASE ของท่านที่นี่ (สำหรับการนำไปเปิดบน GitHub Pages) 🔴
@@ -873,6 +973,7 @@
 
         function setCloudStatus(state, text) {
             const statusEl = document.getElementById('cloudStatus');
+            if (!statusEl) return;
             const iconEl = statusEl.previousElementSibling;
             const container = statusEl.parentElement;
             
@@ -905,10 +1006,12 @@
                 
                 setCloudStatus('online', 'ออนไลน์');
 
-                if (!document.getElementById('projectModal').classList.contains('hidden')) {
+                const projectModal = document.getElementById('projectModal');
+                if (projectModal && !projectModal.classList.contains('hidden')) {
                     window.renderProjectList();
                 }
-                if (!document.getElementById('masterSummaryModal').classList.contains('hidden')) {
+                const masterSummaryModal = document.getElementById('masterSummaryModal');
+                if (masterSummaryModal && !masterSummaryModal.classList.contains('hidden')) {
                     window.renderMasterSummary();
                 }
             }, (error) => {
@@ -924,7 +1027,8 @@
                     window.cloudKIndices[doc.id] = doc.data();
                 });
                 // หากเปิดหน้าต่างคำนวณอยู่ ให้อัปเดตตารางดัชนีทันที
-                if (!document.getElementById('kValueModal').classList.contains('hidden')) {
+                const kValueModal = document.getElementById('kValueModal');
+                if (kValueModal && !kValueModal.classList.contains('hidden')) {
                     window.updateKIndices();
                 }
             }, (error) => {
@@ -991,7 +1095,8 @@
                 deliveryDate: document.getElementById('kDeliveryDate') ? document.getElementById('kDeliveryDate').value : '',
                 baseMonth: document.getElementById('kBaseMonth') ? document.getElementById('kBaseMonth').value : '',
                 targetMonth: document.getElementById('kTargetMonth') ? document.getElementById('kTargetMonth').value : '',
-                items: kValueItemsToSave
+                items: kValueItemsToSave,
+                calculatedComp: window.globalKCompensation // 🌟 เซฟค่าที่คำนวณได้ลงคลาวด์ด้วย
             };
 
             const projId = window.currentProjectId || 'proj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
@@ -1006,7 +1111,7 @@
                 totalCost: document.getElementById('totalNew').innerText, 
                 allocatedBudget: document.getElementById('allocatedBudget').value,
                 rows: rows,
-                kValueData: kValueData, // ฝังชุดข้อมูลค่า K เข้าไปในโปรเจกต์ด้วย
+                kValueData: kValueData, 
                 updatedAt: new Date().toLocaleString('th-TH'),
                 timestamp: Date.now(),
                 ownerUid: currentUser.uid
@@ -1250,8 +1355,10 @@
                             formula: oldFormulas[idx] || ''
                         }));
                     }
+                    window.globalKCompensation = project.kValueData.calculatedComp !== undefined ? project.kValueData.calculatedComp : null;
                 } else {
                     window.savedKValueItems = [];
+                    window.globalKCompensation = null;
                 }
                 
                 if(document.getElementById('kEligibleItemsList')) {
@@ -1321,6 +1428,7 @@
                 
                 // เคลียร์ข้อมูล K-Value ด้วย
                 window.savedKValueItems = [];
+                window.globalKCompensation = null; // เคลียร์ค่าที่หน้าหลัก
                 if(document.getElementById('kEligibleItemsList')) document.getElementById('kEligibleItemsList').innerHTML = '';
                 if(document.getElementById('kContractor')) document.getElementById('kContractor').value = '';
                 if(document.getElementById('kContractNo')) document.getElementById('kContractNo').value = '';
@@ -1343,12 +1451,112 @@
             return parseFloat(String(str).replace(/,/g, '')) || 0;
         }
 
+        // 🌟 เพิ่มฟังก์ชันโหลดและบันทึกประวัติราคาน้ำมัน 🌟
+        window.loadFuelHistory = function() {
+            const historyStr = localStorage.getItem('pso_fuel_history');
+            // กำหนดค่าเริ่มต้นถ้ายังไม่มีประวัติ
+            let history = historyStr ? JSON.parse(historyStr) : ["29.94", "30.33", "32.94", "34.94", "50.29"]; 
+            const datalist = document.getElementById('fuelHistory');
+            if (datalist) {
+                datalist.innerHTML = '';
+                history.forEach(price => {
+                    const option = document.createElement('option');
+                    option.value = price;
+                    datalist.appendChild(option);
+                });
+            }
+        };
+
+        window.saveFuelPriceToHistory = function(price) {
+            if (!price || isNaN(parseFloat(price))) return;
+            price = parseFloat(price).toFixed(2);
+            
+            const historyStr = localStorage.getItem('pso_fuel_history');
+            let history = historyStr ? JSON.parse(historyStr) : ["29.94", "30.33", "32.94", "34.94", "50.29"];
+            
+            // ถ้าค่ายังไม่มีในประวัติ ให้เพิ่มเข้าไปบนสุด
+            if (!history.includes(price)) {
+                history.unshift(price);
+                if (history.length > 10) history.pop(); // เก็บประวัติไว้แค่ 10 ค่าล่าสุด
+                localStorage.setItem('pso_fuel_history', JSON.stringify(history));
+                window.loadFuelHistory(); // อัปเดต datalist ทันที
+            }
+        };
+
         window.updateHeaders = function() {
             const oldPrice = document.getElementById('oldFuelPrice').value;
             const newPrice = document.getElementById('newFuelPrice').value;
+            
+            // บันทึกประวัติเมื่อมีการพิมพ์เปลี่ยนค่า
+            window.saveFuelPriceToHistory(oldPrice);
+            window.saveFuelPriceToHistory(newPrice);
+
             document.getElementById('headerOldPrice').innerText = `(น้ำมัน ${oldPrice})`;
             document.getElementById('headerNewPrice').innerText = `(น้ำมัน ${newPrice})`;
             if (window.myChart) window.calculateTotals();
+        };
+
+        // 🌟 อัปเดตลิงก์ ปตท. ในระบบตรวจสอบราคาน้ำมัน 🌟
+        window.checkProvincialFuel = async function() {
+            const provSelect = document.getElementById('fuelProvince');
+            const prov = provSelect.options[provSelect.selectedIndex].text;
+            
+            // ลิงก์ที่ ปตท. ที่อัปเดตใหม่
+            const pttLink = "https://www.pttor.com/th/oil_price";
+
+            const btn = document.getElementById('btnFetchFuel');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังดึง...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('https://api.chnwt.dev/thai-oil-api/latest');
+                if (!response.ok) throw new Error('API Error');
+                const result = await response.json();
+                
+                let dieselPrice = null;
+
+                if (result.response && result.response.stations && result.response.stations.ptt) {
+                    const ptt = result.response.stations.ptt;
+                    const keys = Object.keys(ptt);
+                    let targetKey = keys.find(k => k.toLowerCase().includes('diesel b7') || k.includes('ดีเซล B7'));
+                    if (!targetKey) targetKey = keys.find(k => k.toLowerCase().includes('diesel') && !k.toLowerCase().includes('premium'));
+                    if (targetKey && ptt[targetKey].price) dieselPrice = ptt[targetKey].price;
+                }
+
+                if (dieselPrice) {
+                    if (prov === 'กทม.') {
+                        document.getElementById('newFuelPrice').value = parseFloat(dieselPrice).toFixed(2);
+                        window.updateHeaders();
+                        window.showDialog(`✅ <b>ดึงราคาน้ำมันสำเร็จ!</b><br><br>ราคาดีเซล (B7) กทม. ล่าสุด: <span class="text-xl font-bold text-red-600">${dieselPrice} บาท/ลิตร</span>`);
+                    } else {
+                        window.showDialog(`
+                            <div class="mb-3">
+                                <i class="fa-solid fa-gas-pump text-4xl text-red-500 mb-2"></i><br>
+                                <b class="text-lg">ตรวจสอบราคาน้ำมันดีเซล (B7)</b>
+                            </div>
+                            <div class="bg-gray-100 p-3 rounded-lg mb-4 text-left text-sm border border-gray-200">
+                                <div class="flex justify-between mb-1 text-gray-500"><span>ราคาหน้าปั๊ม กทม. (ฐาน):</span> <span>${dieselPrice} บ./ลิตร</span></div>
+                                <div class="flex justify-between text-red-600 border-t border-gray-300 pt-1 mt-1"><span>ราคา จ.${prov}:</span> <span class="font-bold">รอตรวจสอบเพิ่ม</span></div>
+                            </div>
+                            <p class="text-sm text-gray-600 leading-relaxed mb-4">ราคาน้ำมันในพื้นที่ <b>จ.${prov}</b> จะมีการบวก <b>"ค่าขนส่ง"</b> เพิ่มเติมจากราคา กทม.<br><br>กรุณาคลิกปุ่มด้านล่างเพื่อเปิดเว็บไซต์ ปตท.</p>
+                            <a href="${pttLink}" target="_blank" onclick="document.querySelector('[id^=customDialog_]').remove()" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold transition shadow-md w-full mb-2">
+                                <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> เปิดเว็บ ปตท. เพื่อดูราคา
+                            </a>
+                            <div class="text-xs text-gray-500">* เมื่อทราบราคาแล้ว นำมากรอกในช่องด้วยตนเอง หรือเลือกจากประวัติได้เลยครับ</div>
+                        `, false);
+                    }
+                } else {
+                    throw new Error('No Diesel Data');
+                }
+
+            } catch (error) {
+                console.error("Fetch fuel price error:", error);
+                window.showDialog(`❌ <b>ไม่สามารถดึงข้อมูลอัตโนมัติได้ในขณะนี้</b><br><br>ท่านสามารถตรวจสอบราคาน้ำมัน จ.${prov} ได้จากเว็บไซต์ ปตท. โดยตรง<br><br><a href="${pttLink}" target="_blank" onclick="document.querySelector('[id^=customDialog_]').remove()" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mt-3 font-bold transition shadow-md"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> เปิดเว็บ ปตท. ตรวจสอบราคา</a>`);
+            } finally {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
         };
 
         // ประกาศตัวแปร Global เพื่อส่งค่าไปใช้ข้ามฟังก์ชัน
@@ -1449,6 +1657,7 @@
             window.globalNetCostDiff = totalDiff;
 
             window.updateChart(chartLabels, chartDataOld, chartDataNew);
+            window.renderMainEcoAnalysis(); // 🌟 อัปเดตกล่องวิเคราะห์หน้าหลัก
         };
 
         window.updateChart = function(labels, dataOld, dataNew) {
@@ -2008,6 +2217,9 @@
                 statusBadge.className = "text-[0.65rem] font-bold px-2 py-1 rounded bg-red-100 text-red-600";
                 document.getElementById('kIndicesTableBody').innerHTML = `<tr><td colspan="4" class="p-4 text-red-500 italic font-semibold">ไม่พบข้อมูลดัชนีของเดือนฐาน หรือ เดือนส่งงาน<br><span class="text-sm font-normal text-gray-500">กรุณากดปุ่ม "ฐานข้อมูลดัชนี" ด้านบนเพื่อนำเข้าข้อมูลของกระทรวงพาณิชย์ก่อนครับ</span></td></tr>`;
                 window.clearKCalculation();
+                
+                // แอบเซฟสถานะสูตรที่เลือกไว้ทุกครั้งที่มีการเปลี่ยน
+                window.savedRowFormulas = Array.from(document.querySelectorAll('#kEligibleItemsList select')).map(s => s.value);
                 return;
             }
 
@@ -2027,6 +2239,9 @@
                     });
                 }
             });
+            
+            // แอบเซฟสถานะสูตรที่เลือกไว้ทุกครั้งที่มีการเปลี่ยน
+            window.savedRowFormulas = Array.from(document.querySelectorAll('#kEligibleItemsList select')).map(s => s.value);
 
             if(requiredIndices.size === 0) {
                 requiredIndices = new Set(['I', 'M', 'F']); // Default ถ้ายังไม่เลือกสูตร
@@ -2076,6 +2291,9 @@
 
             // ซ่อนการวิเคราะห์
             document.getElementById('economicAnalysisCard').classList.add('hidden');
+            
+            window.globalKCompensation = null;
+            window.renderMainEcoAnalysis();
         };
 
         window.calculateK = function(dbBase, dbTarget) {
@@ -2231,30 +2449,150 @@
                 document.getElementById('ecoGapValue').innerText = `${window.formatNumber(Math.abs(gapValue))} บาท`;
                 
                 const conclusionEl = document.getElementById('ecoConclusionText');
+                let analysisHtml = '';
                 
+                if (actualCostDiff > 0) { // ต้นทุนพุ่ง (ราคาน้ำมันแพงขึ้น)
+                    analysisHtml += `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <!-- มุมมอง อบจ. -->
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 shadow-sm">
+                                <h4 class="font-bold text-blue-900 mb-3 pb-2 border-b border-blue-200 flex items-center">
+                                    <i class="fa-solid fa-building-columns text-lg mr-2 text-blue-600"></i> มุมมอง อบจ.พิษณุโลก (ผู้ว่าจ้าง)
+                                </h4>
+                                <ul class="list-disc pl-5 text-sm text-blue-800 space-y-2 leading-relaxed">
+                                    <li><b>ผลกระทบต่องบประมาณ:</b> อบจ. ต้องจัดเตรียมงบประมาณรายจ่าย เพื่อนำมาจ่ายชดเชยค่า K เพิ่มเติมเป็นจำนวน <b>${window.formatNumber(Math.max(0, totalCompensation))} บาท</b></li>
+                                    <li><b>ความคุ้มค่าทางเศรษฐศาสตร์:</b> ${gapValue > 0 ? `รัฐประหยัดงบประมาณแผ่นดินไปได้ <b>${window.formatNumber(gapValue)} บาท</b> เมื่อเทียบกับการล้มเลิกสัญญาแล้วประมูลใหม่ด้วยราคาตลาดปัจจุบัน (เนื่องจากระเบียบกำหนดให้ผู้รับจ้างต้องรับความเสี่ยง 4% แรกไว้เอง)` : `สูตรค่า K อนุมัติชดเชยเกินกว่าต้นทุนที่เพิ่มขึ้นจริง <b>${window.formatNumber(Math.abs(gapValue))} บาท</b> (เป็นไปตามหลักเกณฑ์ของประกาศกระทรวงพาณิชย์)`}</li>
+                                    <li><b>การบริหารความเสี่ยง:</b> การอนุมัติจ่ายชดเชยส่วนนี้ ช่วยเยียวยาและลดความเสี่ยงจากการทิ้งงานของผู้รับจ้าง ทำให้โครงการเดินหน้าต่อได้โดยไม่หยุดชะงัก</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- มุมมอง ผู้รับจ้าง -->
+                            <div class="bg-orange-50 p-4 rounded-lg border border-orange-200 shadow-sm">
+                                <h4 class="font-bold text-orange-900 mb-3 pb-2 border-b border-orange-200 flex items-center">
+                                    <i class="fa-solid fa-helmet-safety text-lg mr-2 text-orange-600"></i> มุมมอง ผู้รับจ้างก่อสร้าง
+                                </h4>
+                                <ul class="list-disc pl-5 text-sm text-orange-800 space-y-2 leading-relaxed">
+                                    <li><b>ภาระต้นทุนหน้างาน:</b> ต้องเผชิญกับต้นทุนก่อสร้างจริงที่พุ่งสูงขึ้นถึง <b>${window.formatNumber(actualCostDiff)} บาท</b> จากราคาน้ำมันและวัสดุที่ปรับตัวสูงขึ้น</li>
+                                    <li><b>การรับเงินเยียวยา:</b> ได้รับการอนุมัติเงินชดเชยค่า K ตามสิทธิมาจำนวน <b>${window.formatNumber(Math.max(0, totalCompensation))} บาท</b> ช่วยบรรเทาภาวะขาดทุนได้อย่างเป็นรูปธรรม</li>
+                                    <li><b>ภาระส่วนต่าง (Risk Burden):</b> ${gapValue > 0 ? `ผู้รับจ้างยังคงต้องควักเนื้อ/แบกรับภาระต้นทุนส่วนเกินด้วยตนเองอีก <b>${window.formatNumber(gapValue)} บาท</b> ซึ่งเป็นความเสี่ยงที่ระบุไว้ในเงื่อนไขสัญญา` : `ได้รับเงินชดเชยครอบคลุมต้นทุนที่เพิ่มขึ้นทั้งหมด`}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                } else if (actualCostDiff < 0) { // ต้นทุนลด (ราคาน้ำมันถูกลง)
+                    analysisHtml += `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <!-- มุมมอง อบจ. -->
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 shadow-sm">
+                                <h4 class="font-bold text-blue-900 mb-3 pb-2 border-b border-blue-200 flex items-center">
+                                    <i class="fa-solid fa-building-columns text-lg mr-2 text-blue-600"></i> มุมมอง อบจ.พิษณุโลก (ผู้ว่าจ้าง)
+                                </h4>
+                                <ul class="list-disc pl-5 text-sm text-blue-800 space-y-2 leading-relaxed">
+                                    <li><b>ผลประโยชน์สะสม:</b> ต้นทุนวัสดุและน้ำมันหน้างานจริงของโครงการลดลง <b>${window.formatNumber(Math.abs(actualCostDiff))} บาท</b> จากราคากลางเดิม</li>
+                                    <li><b>สิทธิการเรียกเงินคืน:</b> ${totalCompensation < 0 ? `ตามระเบียบ อบจ. มีสิทธิหักเงินค่างานคืนจากผู้รับจ้างได้จำนวน <b>${window.formatNumber(Math.abs(totalCompensation))} บาท</b> เพื่อนำส่งเป็นรายได้แผ่นดินต่อไป` : `ไม่สามารถหักเงินคืนได้ เนื่องจากดัชนีราคาลดลงไม่ถึงเกณฑ์ 4% ที่ระเบียบกำหนดไว้ ถือว่าอยู่ในช่วงผันผวนปกติ`}</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- มุมมอง ผู้รับจ้าง -->
+                            <div class="bg-orange-50 p-4 rounded-lg border border-orange-200 shadow-sm">
+                                <h4 class="font-bold text-orange-900 mb-3 pb-2 border-b border-orange-200 flex items-center">
+                                    <i class="fa-solid fa-helmet-safety text-lg mr-2 text-orange-600"></i> มุมมอง ผู้รับจ้างก่อสร้าง
+                                </h4>
+                                <ul class="list-disc pl-5 text-sm text-orange-800 space-y-2 leading-relaxed">
+                                    <li><b>กำไรส่วนเพิ่ม:</b> ได้รับผลประโยชน์เบื้องต้นจากต้นทุนหน้างานที่ถูกลง <b>${window.formatNumber(Math.abs(actualCostDiff))} บาท</b></li>
+                                    <li><b>การถูกหักเงินคืน:</b> ${totalCompensation < 0 ? `ต้องถูกหักค่างานคืนจำนวน <b>${window.formatNumber(Math.abs(totalCompensation))} บาท</b> คืนให้แก่รัฐตามเงื่อนไขความผันผวนของสัญญาค่า K` : `ยังคงรักษากำไรส่วนเพิ่มไว้ได้ เนื่องจากความผันผวนอยู่ในกรอบความเสี่ยงที่ 4%`}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    analysisHtml += `<div class="p-6 text-center text-gray-500 font-semibold bg-gray-50 mt-4 rounded-lg border border-gray-200">- ไม่มีการเปลี่ยนแปลงต้นทุนก่อสร้างอย่างมีนัยสำคัญ -</div>`;
+                }
+
+                // 🌟 ฟังก์ชันวิเคราะห์ ผู้ได้/เสีย ผลประโยชน์ (Win-Loss) 🌟
+                let winLossHtml = '';
                 if (actualCostDiff > 0) {
                     if (gapValue > 0) {
-                        conclusionEl.innerHTML = `<i class="fa-solid fa-check-double text-green-600"></i> <b>รัฐประหยัดงบประมาณ:</b> สูตรค่า K อนุมัติเงินชดเชยน้อยกว่าต้นทุนตลาดที่เพิ่มขึ้นจริง ภาระส่วนต่าง ${window.formatNumber(gapValue)} บาท ผู้รับจ้างเป็นผู้รับความเสี่ยง <br><span class="text-xs text-gray-600 font-normal">*(สรุป: การใช้สัญญาค่า K คุ้มค่ากว่าการยกเลิกประมูลแล้วคำนวณราคากลางใหม่)*</span>`;
-                        conclusionEl.className = "text-sm font-semibold mt-3 text-indigo-800";
+                        winLossHtml = `
+                            <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300 shadow-sm">
+                                <h4 class="font-bold text-gray-800 mb-3"><i class="fa-solid fa-scale-unbalanced mr-1 text-gray-600"></i> สรุปผู้ได้/เสียผลประโยชน์:</h4>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <div class="flex-1 bg-green-50 p-3 rounded border border-green-200 border-l-4 border-l-green-500">
+                                        <div class="text-green-800 font-bold"><i class="fa-solid fa-face-smile mr-1 text-green-600"></i> ฝ่ายที่ได้เปรียบ: อบจ. (ผู้ว่าจ้าง)</div>
+                                        <div class="text-xs text-green-700 mt-1">รัฐประหยัดงบประมาณส่วนต่างไปได้ ${window.formatNumber(gapValue)} บาท</div>
+                                    </div>
+                                    <div class="flex-1 bg-red-50 p-3 rounded border border-red-200 border-l-4 border-l-red-500">
+                                        <div class="text-red-800 font-bold"><i class="fa-solid fa-face-frown mr-1 text-red-600"></i> ฝ่ายที่เสียเปรียบ: ผู้รับจ้าง</div>
+                                        <div class="text-xs text-red-700 mt-1">ต้องแบกรับภาระส่วนเกิน (Risk Gap) ด้วยตนเอง ${window.formatNumber(gapValue)} บาท</div>
+                                    </div>
+                                </div>
+                            </div>`;
                     } else if (gapValue < 0) {
-                        conclusionEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-orange-500"></i> <b>รัฐจ่ายชดเชยเกินต้นทุนจริง:</b> สูตรค่า K ชดเชยให้มากกว่าต้นทุนที่พุ่งขึ้นจริง ${window.formatNumber(Math.abs(gapValue))} บาท <br><span class="text-xs text-gray-600 font-normal">*(สรุป: สูตรเอื้อประโยชน์ต่อผู้รับจ้างในกรณีนี้ ควรตรวจสอบดัชนีวัสดุอื่นๆ ประกอบ)*</span>`;
-                        conclusionEl.className = "text-sm font-semibold mt-3 text-orange-800";
+                         winLossHtml = `
+                            <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300 shadow-sm">
+                                <h4 class="font-bold text-gray-800 mb-3"><i class="fa-solid fa-scale-unbalanced mr-1 text-gray-600"></i> สรุปผู้ได้/เสียผลประโยชน์:</h4>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <div class="flex-1 bg-green-50 p-3 rounded border border-green-200 border-l-4 border-l-green-500">
+                                        <div class="text-green-800 font-bold"><i class="fa-solid fa-face-smile mr-1 text-green-600"></i> ฝ่ายที่ได้เปรียบ: ผู้รับจ้าง</div>
+                                        <div class="text-xs text-green-700 mt-1">ได้รับเงินชดเชยเกินกว่าต้นทุนที่เพิ่มขึ้นจริง ${window.formatNumber(Math.abs(gapValue))} บาท</div>
+                                    </div>
+                                    <div class="flex-1 bg-red-50 p-3 rounded border border-red-200 border-l-4 border-l-red-500">
+                                        <div class="text-red-800 font-bold"><i class="fa-solid fa-face-frown mr-1 text-red-600"></i> ฝ่ายที่เสียเปรียบ: อบจ. (ผู้ว่าจ้าง)</div>
+                                        <div class="text-xs text-red-700 mt-1">รัฐต้องจ่ายเงินชดเชยเกินกว่าสภาพความเป็นจริง ${window.formatNumber(Math.abs(gapValue))} บาท</div>
+                                    </div>
+                                </div>
+                            </div>`;
                     } else {
-                        conclusionEl.innerHTML = `<i class="fa-solid fa-equals text-blue-500"></i> <b>ชดเชยสมดุล:</b> เงินชดเชยครอบคลุมต้นทุนที่เพิ่มขึ้นพอดี`;
-                        conclusionEl.className = "text-sm font-semibold mt-3 text-blue-800";
+                         winLossHtml = `
+                            <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300 shadow-sm text-center">
+                                <div class="text-blue-800 font-bold"><i class="fa-solid fa-handshake text-blue-600 mr-1"></i> วิน-วิน (Win-Win) สมดุลทั้งสองฝ่าย</div>
+                                <div class="text-xs text-blue-700 mt-1">เงินชดเชยครอบคลุมต้นทุนที่พุ่งขึ้นพอดี ไม่มีฝ่ายใดเสียเปรียบ</div>
+                            </div>`;
                     }
                 } else if (actualCostDiff < 0) {
-                    if (totalCompensation < 0) { 
-                        conclusionEl.innerHTML = `<i class="fa-solid fa-hand-holding-dollar text-green-600"></i> <b>รัฐได้ผลประโยชน์:</b> สามารถเรียกคืนค่างานได้ ${window.formatNumber(Math.abs(totalCompensation))} บาท ลดผลกระทบจากราคาน้ำมันที่ร่วงลง`;
-                        conclusionEl.className = "text-sm font-semibold mt-3 text-green-800";
+                    if (Math.abs(totalCompensation) < Math.abs(actualCostDiff)) {
+                        const contractorSavings = Math.abs(actualCostDiff) - Math.abs(totalCompensation);
+                        winLossHtml = `
+                            <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300 shadow-sm">
+                                <h4 class="font-bold text-gray-800 mb-3"><i class="fa-solid fa-scale-unbalanced mr-1 text-gray-600"></i> สรุปผู้ได้/เสียผลประโยชน์:</h4>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <div class="flex-1 bg-green-50 p-3 rounded border border-green-200 border-l-4 border-l-green-500">
+                                        <div class="text-green-800 font-bold"><i class="fa-solid fa-face-smile mr-1 text-green-600"></i> ฝ่ายที่ได้เปรียบ: ผู้รับจ้าง</div>
+                                        <div class="text-xs text-green-700 mt-1">รักษากำไรส่วนเพิ่มไว้ได้ ${window.formatNumber(contractorSavings)} บาท เนื่องจากราคาตกไม่ถึงเกณฑ์ที่รัฐริบเงินคืนได้ทั้งหมด</div>
+                                    </div>
+                                    <div class="flex-1 bg-red-50 p-3 rounded border border-red-200 border-l-4 border-l-red-500">
+                                        <div class="text-red-800 font-bold"><i class="fa-solid fa-face-frown mr-1 text-red-600"></i> ฝ่ายที่เสียเปรียบ: อบจ. (ผู้ว่าจ้าง)</div>
+                                        <div class="text-xs text-red-700 mt-1">เสียโอกาสในการประหยัดงบประมาณ ${window.formatNumber(contractorSavings)} บาท ตามราคากลางที่ลดลงจริง</div>
+                                    </div>
+                                </div>
+                            </div>`;
+                    } else if (Math.abs(totalCompensation) > Math.abs(actualCostDiff)) {
+                        const govtExtra = Math.abs(totalCompensation) - Math.abs(actualCostDiff);
+                        winLossHtml = `
+                            <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300 shadow-sm">
+                                <h4 class="font-bold text-gray-800 mb-3"><i class="fa-solid fa-scale-unbalanced mr-1 text-gray-600"></i> สรุปผู้ได้/เสียผลประโยชน์:</h4>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <div class="flex-1 bg-green-50 p-3 rounded border border-green-200 border-l-4 border-l-green-500">
+                                        <div class="text-green-800 font-bold"><i class="fa-solid fa-face-smile mr-1 text-green-600"></i> ฝ่ายที่ได้เปรียบ: อบจ. (ผู้ว่าจ้าง)</div>
+                                        <div class="text-xs text-green-700 mt-1">เรียกเงินคืนได้มากกว่ามูลค่าต้นทุนที่ลดลงจริง ${window.formatNumber(govtExtra)} บาท</div>
+                                    </div>
+                                    <div class="flex-1 bg-red-50 p-3 rounded border border-red-200 border-l-4 border-l-red-500">
+                                        <div class="text-red-800 font-bold"><i class="fa-solid fa-face-frown mr-1 text-red-600"></i> ฝ่ายที่เสียเปรียบ: ผู้รับจ้าง</div>
+                                        <div class="text-xs text-red-700 mt-1">โดนหักเงินค่างานคืนเกินกว่าต้นทุนที่ประหยัดไปได้ ${window.formatNumber(govtExtra)} บาท</div>
+                                    </div>
+                                </div>
+                            </div>`;
                     } else {
-                        conclusionEl.innerHTML = `<i class="fa-solid fa-circle-info text-gray-500"></i> ต้นทุนจริงลดลง แต่ค่า K ไม่ถึงเกณฑ์ให้เรียกเงินคืน (อยู่ในช่วงรับความเสี่ยง 4%)`;
-                        conclusionEl.className = "text-sm font-semibold mt-3 text-gray-800";
+                         winLossHtml = `
+                            <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300 shadow-sm text-center">
+                                <div class="text-blue-800 font-bold"><i class="fa-solid fa-handshake text-blue-600 mr-1"></i> วิน-วิน (Win-Win) สมดุลทั้งสองฝ่าย</div>
+                                <div class="text-xs text-blue-700 mt-1">การหักเงินคืนสอดคล้องกับต้นทุนที่ลดลงจริง ไม่มีฝ่ายใดเสียเปรียบ</div>
+                            </div>`;
                     }
-                } else {
-                    conclusionEl.innerHTML = `- ไม่มีการเปลี่ยนแปลงอย่างมีนัยสำคัญ -`;
-                    conclusionEl.className = "text-sm font-semibold mt-3 text-gray-500";
                 }
+                analysisHtml += winLossHtml;
+                
+                conclusionEl.innerHTML = analysisHtml;
 
                 // 🌟 เรียกใช้อัปเดตกราฟเส้นวิเคราะห์เศรษฐศาสตร์ 🌟
                 window.updateEcoChart(
@@ -2267,6 +2605,180 @@
             } else {
                 ecoCard.classList.add('hidden');
             }
+            
+            // 🌟 ส่งค่าไปอัปเดตบทวิเคราะห์ที่หน้าจอหลัก 🌟
+            window.globalKCompensation = totalCompensation;
+            window.renderMainEcoAnalysis();
+        };
+
+        // 🌟 ฟังก์ชันวาดกล่องวิเคราะห์เศรษฐศาสตร์ที่หน้าจอหลัก 🌟
+        window.renderMainEcoAnalysis = function() {
+            const gapContainer = document.getElementById('mainPageEcoGapContainer');
+            const contentContainer = document.getElementById('mainPageEcoContent');
+            const actualCostDiff = window.globalNetCostDiff || 0;
+            const totalCompensation = window.globalKCompensation;
+
+            // ถ้ายังไม่เคยคำนวณค่า K ให้โชว์กล่องเชิญชวน
+            if (typeof totalCompensation !== 'number') {
+                if(gapContainer) gapContainer.classList.add('hidden');
+                if(contentContainer) contentContainer.innerHTML = `
+                    <div class="text-center p-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                        <i class="fa-solid fa-calculator text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-gray-500 mb-3">ระบบยังไม่มีข้อมูลค่า K กรุณาคำนวณค่า K เพื่อแสดงบทวิเคราะห์เศรษฐศาสตร์</p>
+                        <button onclick="window.openKValueModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-full shadow-md transition">
+                            <i class="fa-solid fa-bolt mr-1"></i> เปิดเครื่องมือคำนวณค่า K
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            const gapValue = actualCostDiff - totalCompensation;
+            if(gapContainer) gapContainer.classList.remove('hidden');
+            document.getElementById('mainPageEcoGap').innerText = `${window.formatNumber(Math.abs(gapValue))} บาท`;
+
+            let analysisHtml = '';
+            if (actualCostDiff > 0) { // ต้นทุนพุ่ง
+                analysisHtml += `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <!-- มุมมอง อบจ. -->
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 shadow-sm">
+                            <h4 class="font-bold text-blue-900 mb-3 pb-2 border-b border-blue-200 flex items-center">
+                                <i class="fa-solid fa-building-columns text-lg mr-2 text-blue-600"></i> มุมมอง อบจ.พิษณุโลก (ผู้ว่าจ้าง)
+                            </h4>
+                            <ul class="list-disc pl-5 text-sm text-blue-800 space-y-2 leading-relaxed">
+                                <li><b>ผลกระทบต่องบประมาณ:</b> อบจ. ต้องจัดเตรียมงบประมาณรายจ่าย เพื่อนำมาจ่ายชดเชยค่า K เพิ่มเติมเป็นจำนวน <b>${window.formatNumber(Math.max(0, totalCompensation))} บาท</b></li>
+                                <li><b>ความคุ้มค่าทางเศรษฐศาสตร์:</b> ${gapValue > 0 ? `รัฐประหยัดงบประมาณแผ่นดินไปได้ <b>${window.formatNumber(gapValue)} บาท</b> เมื่อเทียบกับการล้มเลิกสัญญาแล้วประมูลใหม่ด้วยราคาตลาดปัจจุบัน` : `สูตรค่า K อนุมัติชดเชยเกินกว่าต้นทุนที่เพิ่มขึ้นจริง <b>${window.formatNumber(Math.abs(gapValue))} บาท</b>`}</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- มุมมอง ผู้รับจ้าง -->
+                        <div class="bg-orange-50 p-4 rounded-lg border border-orange-200 shadow-sm">
+                            <h4 class="font-bold text-orange-900 mb-3 pb-2 border-b border-orange-200 flex items-center">
+                                <i class="fa-solid fa-helmet-safety text-lg mr-2 text-orange-600"></i> มุมมอง ผู้รับจ้างก่อสร้าง
+                            </h4>
+                            <ul class="list-disc pl-5 text-sm text-orange-800 space-y-2 leading-relaxed">
+                                <li><b>ภาระต้นทุนหน้างาน:</b> ต้องเผชิญกับต้นทุนก่อสร้างจริงที่พุ่งสูงขึ้นถึง <b>${window.formatNumber(actualCostDiff)} บาท</b> จากราคาน้ำมันและวัสดุ</li>
+                                <li><b>การรับเงินเยียวยา:</b> ได้รับอนุมัติเงินชดเชยค่า K <b>${window.formatNumber(Math.max(0, totalCompensation))} บาท</b> ช่วยบรรเทาภาวะขาดทุนได้</li>
+                                <li><b>ภาระส่วนต่าง (Risk Burden):</b> ${gapValue > 0 ? `ผู้รับจ้างยังคงต้องแบกรับภาระต้นทุนส่วนเกินด้วยตนเองอีก <b>${window.formatNumber(gapValue)} บาท</b> ซึ่งเป็นความเสี่ยงตามเงื่อนไขสัญญา` : `ได้รับเงินชดเชยครอบคลุมต้นทุนที่เพิ่มขึ้นทั้งหมด`}</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            } else if (actualCostDiff < 0) { // ต้นทุนลด
+                analysisHtml += `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <!-- มุมมอง อบจ. -->
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 shadow-sm">
+                            <h4 class="font-bold text-blue-900 mb-3 pb-2 border-b border-blue-200 flex items-center">
+                                <i class="fa-solid fa-building-columns text-lg mr-2 text-blue-600"></i> มุมมอง อบจ.พิษณุโลก (ผู้ว่าจ้าง)
+                            </h4>
+                            <ul class="list-disc pl-5 text-sm text-blue-800 space-y-2 leading-relaxed">
+                                <li><b>ผลประโยชน์สะสม:</b> ต้นทุนวัสดุและน้ำมันหน้างานจริงลดลง <b>${window.formatNumber(Math.abs(actualCostDiff))} บาท</b> จากราคากลางเดิม</li>
+                                <li><b>สิทธิการเรียกเงินคืน:</b> ${totalCompensation < 0 ? `มีสิทธิหักเงินค่างานคืนจากผู้รับจ้างได้จำนวน <b>${window.formatNumber(Math.abs(totalCompensation))} บาท</b> เพื่อนำส่งเป็นรายได้แผ่นดิน` : `ไม่สามารถหักเงินคืนได้ เนื่องจากดัชนีราคาลดลงไม่ถึงเกณฑ์ 4% ที่ระเบียบกำหนดไว้`}</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- มุมมอง ผู้รับจ้าง -->
+                        <div class="bg-orange-50 p-4 rounded-lg border border-orange-200 shadow-sm">
+                            <h4 class="font-bold text-orange-900 mb-3 pb-2 border-b border-orange-200 flex items-center">
+                                <i class="fa-solid fa-helmet-safety text-lg mr-2 text-orange-600"></i> มุมมอง ผู้รับจ้างก่อสร้าง
+                            </h4>
+                            <ul class="list-disc pl-5 text-sm text-orange-800 space-y-2 leading-relaxed">
+                                <li><b>กำไรส่วนเพิ่ม:</b> ได้รับผลประโยชน์เบื้องต้นจากต้นทุนหน้างานที่ถูกลง <b>${window.formatNumber(Math.abs(actualCostDiff))} บาท</b></li>
+                                <li><b>การถูกหักเงินคืน:</b> ${totalCompensation < 0 ? `ต้องถูกหักค่างานคืนจำนวน <b>${window.formatNumber(Math.abs(totalCompensation))} บาท</b> คืนให้แก่รัฐตามเงื่อนไขความผันผวนของสัญญาค่า K` : `ยังคงรักษากำไรส่วนเพิ่มไว้ได้ เนื่องจากความผันผวนอยู่ในกรอบความเสี่ยงที่ 4%`}</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            } else {
+                analysisHtml = `<div class="p-6 text-center text-gray-500 font-semibold bg-gray-50 mt-2 rounded-lg border border-gray-200">- ไม่มีการเปลี่ยนแปลงต้นทุนก่อสร้างอย่างมีนัยสำคัญ -</div>`;
+            }
+
+            // 🌟 ฟังก์ชันวิเคราะห์ ผู้ได้/เสีย ผลประโยชน์ (Win-Loss) หน้าจอหลัก 🌟
+            let winLossHtml = '';
+            if (actualCostDiff > 0) {
+                if (gapValue > 0) {
+                    winLossHtml = `
+                        <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300 shadow-sm">
+                            <h4 class="font-bold text-gray-800 mb-3"><i class="fa-solid fa-scale-unbalanced mr-1 text-gray-600"></i> สรุปผู้ได้/เสียผลประโยชน์:</h4>
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <div class="flex-1 bg-green-50 p-3 rounded border border-green-200 border-l-4 border-l-green-500">
+                                    <div class="text-green-800 font-bold"><i class="fa-solid fa-face-smile mr-1 text-green-600"></i> ฝ่ายที่ได้เปรียบ: อบจ. (ผู้ว่าจ้าง)</div>
+                                    <div class="text-xs text-green-700 mt-1">รัฐประหยัดงบประมาณส่วนต่างไปได้ ${window.formatNumber(gapValue)} บาท</div>
+                                </div>
+                                <div class="flex-1 bg-red-50 p-3 rounded border border-red-200 border-l-4 border-l-red-500">
+                                    <div class="text-red-800 font-bold"><i class="fa-solid fa-face-frown mr-1 text-red-600"></i> ฝ่ายที่เสียเปรียบ: ผู้รับจ้าง</div>
+                                    <div class="text-xs text-red-700 mt-1">ต้องแบกรับภาระส่วนเกิน (Risk Gap) ด้วยตนเอง ${window.formatNumber(gapValue)} บาท</div>
+                                </div>
+                            </div>
+                        </div>`;
+                } else if (gapValue < 0) {
+                     winLossHtml = `
+                        <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300 shadow-sm">
+                            <h4 class="font-bold text-gray-800 mb-3"><i class="fa-solid fa-scale-unbalanced mr-1 text-gray-600"></i> สรุปผู้ได้/เสียผลประโยชน์:</h4>
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <div class="flex-1 bg-green-50 p-3 rounded border border-green-200 border-l-4 border-l-green-500">
+                                    <div class="text-green-800 font-bold"><i class="fa-solid fa-face-smile mr-1 text-green-600"></i> ฝ่ายที่ได้เปรียบ: ผู้รับจ้าง</div>
+                                    <div class="text-xs text-green-700 mt-1">ได้รับเงินชดเชยเกินกว่าต้นทุนที่เพิ่มขึ้นจริง ${window.formatNumber(Math.abs(gapValue))} บาท</div>
+                                </div>
+                                <div class="flex-1 bg-red-50 p-3 rounded border border-red-200 border-l-4 border-l-red-500">
+                                    <div class="text-red-800 font-bold"><i class="fa-solid fa-face-frown mr-1 text-red-600"></i> ฝ่ายที่เสียเปรียบ: อบจ. (ผู้ว่าจ้าง)</div>
+                                    <div class="text-xs text-red-700 mt-1">รัฐต้องจ่ายเงินชดเชยเกินกว่าสภาพความเป็นจริง ${window.formatNumber(Math.abs(gapValue))} บาท</div>
+                                </div>
+                            </div>
+                        </div>`;
+                } else {
+                     winLossHtml = `
+                        <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300 shadow-sm text-center">
+                            <div class="text-blue-800 font-bold"><i class="fa-solid fa-handshake text-blue-600 mr-1"></i> วิน-วิน (Win-Win) สมดุลทั้งสองฝ่าย</div>
+                            <div class="text-xs text-blue-700 mt-1">เงินชดเชยครอบคลุมต้นทุนที่พุ่งขึ้นพอดี ไม่มีฝ่ายใดเสียเปรียบ</div>
+                        </div>`;
+                }
+            } else if (actualCostDiff < 0) {
+                if (Math.abs(totalCompensation) < Math.abs(actualCostDiff)) {
+                    const contractorSavings = Math.abs(actualCostDiff) - Math.abs(totalCompensation);
+                    winLossHtml = `
+                        <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300 shadow-sm">
+                            <h4 class="font-bold text-gray-800 mb-3"><i class="fa-solid fa-scale-unbalanced mr-1 text-gray-600"></i> สรุปผู้ได้/เสียผลประโยชน์:</h4>
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <div class="flex-1 bg-green-50 p-3 rounded border border-green-200 border-l-4 border-l-green-500">
+                                    <div class="text-green-800 font-bold"><i class="fa-solid fa-face-smile mr-1 text-green-600"></i> ฝ่ายที่ได้เปรียบ: ผู้รับจ้าง</div>
+                                    <div class="text-xs text-green-700 mt-1">รักษากำไรส่วนเพิ่มไว้ได้ ${window.formatNumber(contractorSavings)} บาท เนื่องจากราคาตกไม่ถึงเกณฑ์ที่รัฐริบเงินคืนได้ทั้งหมด</div>
+                                </div>
+                                <div class="flex-1 bg-red-50 p-3 rounded border border-red-200 border-l-4 border-l-red-500">
+                                    <div class="text-red-800 font-bold"><i class="fa-solid fa-face-frown mr-1 text-red-600"></i> ฝ่ายที่เสียเปรียบ: อบจ. (ผู้ว่าจ้าง)</div>
+                                    <div class="text-xs text-red-700 mt-1">เสียโอกาสในการประหยัดงบประมาณ ${window.formatNumber(contractorSavings)} บาท ตามราคากลางที่ลดลงจริง</div>
+                                </div>
+                            </div>
+                        </div>`;
+                } else if (Math.abs(totalCompensation) > Math.abs(actualCostDiff)) {
+                    const govtExtra = Math.abs(totalCompensation) - Math.abs(actualCostDiff);
+                    winLossHtml = `
+                        <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300 shadow-sm">
+                            <h4 class="font-bold text-gray-800 mb-3"><i class="fa-solid fa-scale-unbalanced mr-1 text-gray-600"></i> สรุปผู้ได้/เสียผลประโยชน์:</h4>
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <div class="flex-1 bg-green-50 p-3 rounded border border-green-200 border-l-4 border-l-green-500">
+                                    <div class="text-green-800 font-bold"><i class="fa-solid fa-face-smile mr-1 text-green-600"></i> ฝ่ายที่ได้เปรียบ: อบจ. (ผู้ว่าจ้าง)</div>
+                                    <div class="text-xs text-green-700 mt-1">เรียกเงินคืนได้มากกว่ามูลค่าต้นทุนที่ลดลงจริง ${window.formatNumber(govtExtra)} บาท</div>
+                                </div>
+                                <div class="flex-1 bg-red-50 p-3 rounded border border-red-200 border-l-4 border-l-red-500">
+                                    <div class="text-red-800 font-bold"><i class="fa-solid fa-face-frown mr-1 text-red-600"></i> ฝ่ายที่เสียเปรียบ: ผู้รับจ้าง</div>
+                                    <div class="text-xs text-red-700 mt-1">โดนหักเงินค่างานคืนเกินกว่าต้นทุนที่ประหยัดไปได้ ${window.formatNumber(govtExtra)} บาท</div>
+                                </div>
+                            </div>
+                        </div>`;
+                } else {
+                     winLossHtml = `
+                        <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-300 shadow-sm text-center">
+                            <div class="text-blue-800 font-bold"><i class="fa-solid fa-handshake text-blue-600 mr-1"></i> วิน-วิน (Win-Win) สมดุลทั้งสองฝ่าย</div>
+                            <div class="text-xs text-blue-700 mt-1">การหักเงินคืนสอดคล้องกับต้นทุนที่ลดลงจริง ไม่มีฝ่ายใดเสียเปรียบ</div>
+                        </div>`;
+                }
+            }
+            analysisHtml += winLossHtml;
+            
+            if(contentContainer) contentContainer.innerHTML = analysisHtml;
         };
 
         // 🌟 ฟังก์ชันวาดกราฟเส้นวิเคราะห์เศรษฐศาสตร์ (Economic Analysis Chart) 🌟
@@ -2362,9 +2874,11 @@
             for (const key of window.kIndexOrder) {
                 const labelDef = window.kIndexLabels[key];
                 container.innerHTML += `
-                    <div class="bg-gray-50 p-2 rounded border border-gray-200 shadow-sm hover:border-indigo-300 transition">
+                    <div class="bg-gray-50 p-2 rounded border border-gray-200 shadow-sm hover:border-indigo-300 transition" id="adminBox_${key}">
                         <label class="block text-[0.7rem] font-bold ${labelDef.color} mb-1 truncate" title="${labelDef.name}">${labelDef.name}</label>
-                        <input type="number" step="0.01" id="adminIdx_${key}" class="w-full border border-gray-300 rounded px-2 py-1 text-sm font-bold text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200" placeholder="0.00">
+                        <input type="text" inputmode="decimal" id="adminIdx_${key}" class="w-full border border-gray-300 rounded px-2 py-1 text-sm font-bold text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 transition-colors" placeholder="0.00" 
+                        oninput="this.value = this.value.replace(/[^0-9.]/g, ''); this.classList.remove('border-red-500', 'bg-red-50'); this.classList.add('border-gray-300'); const box = document.getElementById('adminBox_${key}'); if(box) box.classList.remove('border-red-400', 'bg-red-50');"
+                        onblur="if(this.value && !isNaN(this.value)) this.value = parseFloat(this.value).toFixed(1);">
                     </div>
                 `;
             }
@@ -2403,33 +2917,41 @@
 
             for (const key of window.kIndexOrder) {
                 const inputEl = document.getElementById(`adminIdx_${key}`);
+                const boxEl = document.getElementById(`adminBox_${key}`);
                 if (inputEl) {
-                    inputEl.value = data && data[key] ? data[key] : '';
+                    inputEl.value = data && data[key] ? parseFloat(data[key]).toFixed(1) : '';
+                    // รีเซ็ตสีตอนโหลดเดือนใหม่
+                    inputEl.classList.remove('border-red-500', 'bg-red-50');
+                    inputEl.classList.add('border-gray-300');
+                    if(boxEl) boxEl.classList.remove('border-red-400', 'bg-red-50');
                 }
             }
         };
 
-        // 🌟 ฟังก์ชัน Smart Paste (VLOOKUP Engine) ฉลาดและแม่นยำ 100% 🌟
+        // 🌟 ฟังก์ชัน Smart Paste (VLOOKUP Engine) อัปเกรดไฮไลท์ช่องที่ขาด 🌟
         window.handleSmartPaste = function(e) {
             setTimeout(() => {
                 let text = e.target.value.replace(/,/g, ''); // ลบลูกน้ำออกก่อน
                 if (!text) return;
                 
+                // แปลงเป็นตัวพิมพ์ใหญ่ให้หมดเพื่อหลีกเลี่ยงปัญหาตัวเล็ก/ตัวใหญ่ เช่น i= หรือ I=
+                const upperText = text.toUpperCase();
+                
                 // กฎ VLOOKUP: ค้นหาคำสำคัญ (Keywords) ของแต่ละดัชนี 
                 const vlookupRules = {
-                    M: ["M=", "ไม่รวมเหล็กและซีเมนต์", "M "],
-                    A: ["A=", "แอสฟัลท์", "A "],
-                    S: ["เหล็ก S", "ดัชนีราคาเหล็ก", " S "], // ดัก S ให้แม่นยำ ไม่ไปซ้ำกับตัวอื่น
-                    E: ["E=", "เครื่องจักรกล", " E "],
-                    C: ["C=", "ดัชนีราคาซีเมนต์", " C "],
+                    M: ["M=", "ไม่รวมเหล็กและซีเมนต์", "วัสดุก่อสร้าง"],
+                    A: ["A=", "แอสฟัลท์"],
+                    S: ["เหล็ก S", "S=", "ดัชนีราคาเหล็ก", "= ดัชนีราคาเหล็ก", "ดัชนีราคาเหล็ก S"],
+                    E: ["E=", "เครื่องจักรกล"],
+                    C: ["C=", "ซีเมนต์", "ดัชนีราคาซีเมนต์"],
                     GIP: ["GIP=", "อาบสังกะสี"],
-                    G: ["G=", "แผ่นเรียบ", " G "],
-                    AC: ["AC=", "ใยหิน"],
-                    I: ["i=", "I=", "ผู้บริโภค"],
+                    G: ["G=", "แผ่นเรียบ", "ดัชนีราคาเหล็กแผ่นเรียบ"],
+                    AC: ["AC=", "ใยหิน", "ซีเมนต์ใยหิน"],
+                    I: ["I=", "ผู้บริโภค"],
                     PVC: ["PVC=", "ท่อ PVC"],
                     F: ["F=", "น้ำมันดีเซล"],
                     W: ["W=", "สายไฟฟ้า"],
-                    PE: ["PE=", "HDPE"]
+                    PE: ["PE=", "HDPE", "ท่อพลาสติก HDPE"]
                 };
 
                 let filledCount = 0;
@@ -2440,9 +2962,10 @@
                     
                     // 1. วิ่งหา Keyword ในข้อความที่ก๊อปปี้มา
                     for (const kw of keywords) {
-                        const idx = text.indexOf(kw);
+                        const kwUpper = kw.toUpperCase();
+                        const idx = upperText.indexOf(kwUpper);
                         if (idx !== -1) {
-                            foundIndex = idx + kw.length;
+                            foundIndex = idx + kwUpper.length;
                             break;
                         }
                     }
@@ -2450,26 +2973,47 @@
                     // 2. ถ้าเจอ Keyword ให้ดูดเอา "ตัวเลขทศนิยม" ตัวแรกที่โผล่มาหลังจากคำนั้น
                     if (foundIndex !== -1) {
                         const searchArea = text.substring(foundIndex);
-                        // หาตัวเลขที่มีทศนิยม 1-2 ตำแหน่ง
-                        const match = searchArea.match(/\s*(\d{2,4}\.\d{1,2})/);
+                        // ดักจับตัวเลขที่มีทศนิยม ข้ามตัวเลขพ.ศ. (เช่น 2569) และ 100
+                        const match = searchArea.match(/(\d{2,4}\.\d{1,2})/);
                         
                         if (match) {
                             const inputEl = document.getElementById(`adminIdx_${key}`);
+                            const boxEl = document.getElementById(`adminBox_${key}`);
                             if (inputEl) {
                                 inputEl.value = parseFloat(match[1]).toFixed(1); // สนค. ปกติใช้ทศนิยม 1 ตำแหน่ง
                                 filledCount++;
+                                
+                                // เอาสีแดงออกถ้าวางสำเร็จ
+                                inputEl.classList.remove('border-red-500', 'bg-red-50');
+                                inputEl.classList.add('border-gray-300');
+                                if(boxEl) boxEl.classList.remove('border-red-400', 'bg-red-50');
                             }
                         }
                     }
                 }
 
-                if (filledCount > 0) {
-                    window.showDialog(`🎉 <b>ระบบ VLOOKUP ทำงานสำเร็จ!</b><br><br>ค้นพบและดึงข้อมูลดัชนีตรงหมวดหมู่เป๊ะๆ จำนวน <b>${filledCount}</b> ค่า<br><br><span class="text-sm text-gray-500">ระบบได้ค้นหาคำสำคัญ (เช่น 'M=', 'น้ำมันดีเซล') และดึงตัวเลขมาใส่ให้อัตโนมัติแล้วครับ</span>`);
+                // 🌟 ระบบตรวจหาช่องที่ยังว่างอยู่และทำไฮไลท์สีแดง 🌟
+                let missingCount = 0;
+                for (const key of window.kIndexOrder) {
+                    const inputEl = document.getElementById(`adminIdx_${key}`);
+                    const boxEl = document.getElementById(`adminBox_${key}`);
+                    if (inputEl && !inputEl.value) {
+                        missingCount++;
+                        inputEl.classList.remove('border-gray-300');
+                        inputEl.classList.add('border-red-500', 'bg-red-50');
+                        if(boxEl) boxEl.classList.add('border-red-400', 'bg-red-50');
+                    }
+                }
+
+                if (missingCount === 0) {
+                    window.showDialog(`🎉 <b>ระบบ VLOOKUP ทำงานสำเร็จ!</b><br><br>ดึงข้อมูลดัชนีครบทั้ง <b>13</b> ค่าแล้วครับ ท่านสามารถกดบันทึกข้อมูลได้เลย`);
+                } else if (filledCount > 0) {
+                    window.showDialog(`⚠️ <b>ดึงข้อมูลได้บางส่วน!</b><br><br>ระบบดึงตัวเลขมาได้ <b>${filledCount}</b> ค่า <br><span class="text-sm text-red-600 font-bold">ขาดข้อมูลอีก ${missingCount} ค่า (ไฮไลท์ช่องสีแดง)</span><br><br><span class="text-sm text-gray-600">ท่านสามารถ <b>คลิกพิมพ์ตัวเลขเติมในช่องสีแดง</b> ด้วยตนเองได้เลยครับ<br>หรือก๊อปปี้ข้อความส่วนที่ขาดใน PDF มาวางในกล่อง VLOOKUP ซ้ำอีกรอบก็ได้ครับ (ระบบจะไม่ลบเลขเดิม)</span>`);
                 } else {
-                    window.showDialog("❌ ระบบ VLOOKUP หาข้อมูลไม่เจอครับ<br>โปรดกด Ctrl+A ก๊อปปี้ข้อความทั้งหมดในหน้า PDF แล้ววางใหม่อีกครั้งครับ");
+                    window.showDialog("❌ ระบบ VLOOKUP หาข้อมูลไม่เจอครับ<br>โปรดลองก๊อปปี้เฉพาะบรรทัดที่มีตัวเลขแล้ววางใหม่อีกครั้ง หรือพิมพ์เติมเองในช่องด้านล่างได้เลยครับ");
                 }
                 
-                e.target.value = ''; // ล้างช่องทิ้ง
+                e.target.value = ''; // ล้างช่องทิ้งเพื่อเตรียมวางครั้งใหม่
             }, 100);
         };
 
@@ -2478,7 +3022,7 @@
             const headers = ["เดือน-ปี (YYYY-MM)", ...window.kIndexOrder];
             const ws_data = [
                 headers,
-                ["2024-05", 115.50, 124.00, 126.00, 111.00, 109.00, 142.00, 115.00, 150.00, 109.00, 113.00, 119.00, 111.00, 121.00],
+                ["2024-05", 115.5, 124.0, 126.0, 111.0, 109.0, 142.0, 115.0, 150.0, 109.0, 113.0, 119.0, 111.0, 121.0],
                 ["", "", "", "", "", "", "", "", "", "", "", "", "", ""] // blank row
             ];
             const ws = XLSX.utils.aoa_to_sheet(ws_data);
@@ -2530,17 +3074,21 @@
                             });
                             
                             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'k_indices', String(monthStr));
-                            await setDoc(docRef, indexData);
+                            await setDoc(docRef, indexData, { merge: true }); // ผสานข้อมูลป้องกันการลบข้อมูลเดิมหาย
                             successCount++;
                         }
                     }
                     
                     event.target.value = '';
-                    window.showDialog(`อัปโหลดและบันทึกดัชนีขึ้นระบบ Cloud สำเร็จจำนวน ${successCount} เดือน!`);
+                    window.showDialog(`✅ อัปโหลดและบันทึกดัชนีขึ้นระบบ Cloud สำเร็จจำนวน ${successCount} เดือน!`);
                     window.loadKIndexForEdit(); 
                     
+                    if (!document.getElementById('kIndexTableModal').classList.contains('hidden')) {
+                        window.openKIndexTableModal();
+                    }
+                    
                 } catch (error) {
-                    window.showDialog("เกิดข้อผิดพลาดในการอ่านไฟล์ Excel: " + error.message);
+                    window.showDialog("❌ เกิดข้อผิดพลาดในการอ่านไฟล์ Excel: " + error.message);
                     event.target.value = '';
                 }
             };
@@ -2561,6 +3109,7 @@
 
             const indexData = {};
             let hasEmpty = false;
+            let hasData = false;
             for (const key of window.kIndexOrder) {
                 const inputEl = document.getElementById(`adminIdx_${key}`);
                 const val = parseFloat(inputEl.value);
@@ -2568,11 +3117,17 @@
                     hasEmpty = true;
                 } else {
                     indexData[key] = val;
+                    hasData = true;
                 }
             }
 
+            if (!hasData) {
+                window.showDialog("❌ ท่านยังไม่ได้กรอกข้อมูลดัชนีเลยสักช่องครับ");
+                return;
+            }
+
             if (hasEmpty) {
-                window.showDialog("คำเตือน: ท่านยังกรอกข้อมูลดัชนีไม่ครบทุกตัว (ช่องที่ว่างจะไม่มีข้อมูลในฐาน)\nต้องการบันทึกต่อหรือไม่?", true, async (confirmed) => {
+                window.showDialog("⚠️ <b>ข้อมูลยังไม่ครบถ้วน</b><br><br>ท่านกรอกข้อมูลดัชนีไม่ครบ 13 ตัว ระบบจะบันทึกเฉพาะช่องที่มีตัวเลข และผสานเข้ากับข้อมูลเดิม (ถ้ามี)<br><br>ต้องการบันทึกข้อมูลส่วนนี้ขึ้น Cloud ใช่หรือไม่?", true, async (confirmed) => {
                     if (confirmed) await executeSaveKIndex(yyyy_mm, indexData);
                 });
             } else {
@@ -2581,26 +3136,117 @@
         };
 
         async function executeSaveKIndex(yyyy_mm, indexData) {
+            const btn = document.querySelector('button[onclick="window.saveKIndexToCloud()"]');
+            const ogText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังบันทึก...';
+            btn.disabled = true;
+
             try {
                 indexData.updatedAt = new Date().toLocaleString('th-TH');
                 indexData.updatedBy = currentUser.uid;
                 
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'k_indices', yyyy_mm);
-                await setDoc(docRef, indexData);
+                // 🌟 เปิดใช้งานโหมดผสานข้อมูล (Merge) เพื่อไม่ให้ข้อมูลเดิมที่เคยก๊อปมาสูญหาย
+                await setDoc(docRef, indexData, { merge: true });
                 
-                window.showDialog(`บันทึกฐานข้อมูลดัชนีประจำเดือน ${window.formatThaiMonth(yyyy_mm)} ขึ้นคลาวด์เรียบร้อยแล้วครับ!`);
+                window.showDialog(`✅ บันทึกฐานข้อมูลดัชนีประจำเดือน <b>${window.formatThaiMonth(yyyy_mm)}</b> ขึ้นคลาวด์เรียบร้อยแล้วครับ!`);
                 window.closeKIndexAdminModal();
+                
+                if (!document.getElementById('kIndexTableModal').classList.contains('hidden')) {
+                    window.openKIndexTableModal();
+                }
             } catch (err) {
                 console.error("Save K-Index failed:", err);
-                window.showDialog("เกิดข้อผิดพลาดในการบันทึกฐานข้อมูลดัชนี");
+                window.showDialog("❌ <b>เกิดข้อผิดพลาดในการบันทึก:</b><br>" + err.message);
+            } finally {
+                btn.innerHTML = ogText;
+                btn.disabled = false;
             }
         }
+
+        // 🌟 ฟังก์ชันจัดการตารางข้อมูลดัชนีทั้งหมด 🌟
+        window.openKIndexTableModal = function() {
+            document.getElementById('kIndexTableModal').classList.remove('hidden');
+            const tbody = document.getElementById('kIndexTableBody');
+            tbody.innerHTML = '';
+            
+            // ใช้เฉพาะข้อมูลจาก Cloud เท่านั้น (ยกเลิก default built-in data)
+            const allData = { ...window.cloudKIndices };
+            const months = Object.keys(allData).sort().reverse(); // เรียงเดือนใหม่ล่าสุดขึ้นก่อน
+            
+            if (months.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-gray-500 italic font-semibold">ยังไม่มีข้อมูลในระบบฐานข้อมูลคลาวด์</td></tr>';
+                return;
+            }
+            
+            months.forEach(month => {
+                const data = allData[month];
+                const badge = '<span class="text-[0.6rem] bg-green-100 text-green-700 px-1.5 rounded-full shadow-sm ml-1 border border-green-200">Cloud</span>';
+                
+                let rowHtml = `<tr class="hover:bg-blue-50 transition">
+                    <td class="p-2 border-r border-gray-200 text-center font-bold text-gray-700 sticky left-0 bg-white z-0">${window.formatThaiMonth(month)}<br>${badge}</td>`;
+                
+                window.kIndexOrder.forEach(key => {
+                    const val = data[key];
+                    // ถ้าค่าว่าง เป็น 0 หรือไม่ใช่ตัวเลข ให้ไฮไลท์สีแดงเพื่อดึงดูดสายตา
+                    if (val === undefined || val === null || val === 0 || isNaN(val) || val === '') {
+                        rowHtml += `<td class="p-2 border-r border-gray-200 text-center text-red-500 font-bold bg-red-50">-</td>`;
+                    } else {
+                        rowHtml += `<td class="p-2 border-r border-gray-200 text-center text-gray-700 font-medium">${val.toFixed(1)}</td>`;
+                    }
+                });
+                
+                rowHtml += `
+                    <td class="p-2 text-center sticky right-0 bg-white z-0 shadow-[-2px_0_5px_rgba(0,0,0,0.05)]">
+                        <button onclick="window.editKIndexFromTable('${month}')" class="bg-blue-100 hover:bg-blue-600 hover:text-white text-blue-600 p-1.5 rounded transition mr-1" title="แก้ไขเดือนนี้">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="window.deleteKIndexFromTable('${month}')" class="bg-red-100 hover:bg-red-600 hover:text-white text-red-500 p-1.5 rounded transition" title="ลบข้อมูล">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>`;
+                
+                tbody.innerHTML += rowHtml;
+            });
+        };
+
+        window.closeKIndexTableModal = function() {
+            document.getElementById('kIndexTableModal').classList.add('hidden');
+        };
+
+        window.editKIndexFromTable = function(month) {
+            window.closeKIndexTableModal();
+            document.getElementById('adminIndexMonth').value = month;
+            window.loadKIndexForEdit(); // สั่งให้หน้าต่างกรอกดัชนีดึงข้อมูลมาโชว์
+        };
+
+        window.deleteKIndexFromTable = async function(month) {
+            window.showDialog(`⚠️ <b>ยืนยันการลบข้อมูล</b><br><br>คุณแน่ใจหรือไม่ที่จะลบข้อมูลดัชนีเดือน <b>${window.formatThaiMonth(month)}</b> ออกจากระบบ Cloud แบบถาวร?`, true, async (confirmed) => {
+                if (!confirmed) return;
+                if (!currentUser || !db) return;
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'k_indices', month);
+                    await deleteDoc(docRef);
+                    window.showDialog(`✅ ลบข้อมูลเดือน ${window.formatThaiMonth(month)} สำเร็จ!`);
+                    window.openKIndexTableModal(); // รีเฟรชตาราง
+                    
+                    // ถ้าเดือนที่กำลังเปิดอยู่ในหน้าฟอร์มโดนลบไป ก็รีเฟรชหน้าฟอร์มด้วย
+                    if (document.getElementById('adminIndexMonth').value === month) {
+                        window.loadKIndexForEdit();
+                    }
+                } catch(e) {
+                    window.showDialog("❌ เกิดข้อผิดพลาดในการลบข้อมูล: " + e.message);
+                }
+            });
+        };
 
 
         // ==========================================
         // การทำงานตอนโหลดหน้าเว็บครั้งแรก
         // ==========================================
         window.onload = function() {
+            window.loadFuelHistory(); // 🌟 โหลดประวัติราคาน้ำมัน
             if(document.getElementById('allocatedBudget')) {
                 window.handleNumberInput(document.getElementById('allocatedBudget'));
             }
