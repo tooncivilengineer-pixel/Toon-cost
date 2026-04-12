@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบฐานข้อมูลผลกระทบราคากลาง - อบจ.พิษณุโลก (Cloud Version)</title>
+    <title>ระบบคำนวณราคากลางและค่า K - อบจ.พิษณุโลก</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -69,11 +69,11 @@
             body { background-color: white; }
             
             /* โหมดพิมพ์หน้าจอหลัก */
-            body:not(.print-modal-only) .no-print { display: none !important; }
-            body:not(.print-modal-only) #masterSummaryModal { display: none !important; }
-            body:not(.print-modal-only) .print-shadow-none { box-shadow: none; border: none; }
-            body:not(.print-modal-only) input { border: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; width: 100%; }
-            body:not(.print-modal-only) input::placeholder { color: transparent; }
+            body:not(.print-modal-only):not(.print-k-value) .no-print { display: none !important; }
+            body:not(.print-modal-only):not(.print-k-value) #masterSummaryModal, body:not(.print-modal-only):not(.print-k-value) #kValueModal, body:not(.print-modal-only):not(.print-k-value) #kIndexAdminModal { display: none !important; }
+            body:not(.print-modal-only):not(.print-k-value) .print-shadow-none { box-shadow: none; border: none; }
+            body:not(.print-modal-only):not(.print-k-value) input { border: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; width: 100%; }
+            body:not(.print-modal-only):not(.print-k-value) input::placeholder { color: transparent; }
 
             /* โหมดพิมพ์เฉพาะตารางสรุป (Master Summary Modal) */
             body.print-modal-only #mainContainer { display: none !important; }
@@ -99,17 +99,61 @@
             }
             body.print-modal-only table { width: 100% !important; border-collapse: collapse !important; }
             body.print-modal-only th, body.print-modal-only td { border: 1px solid #9ca3af !important; }
+
+            /* โหมดพิมพ์เฉพาะหน้าต่างคำนวณค่า K (K-Value Modal) */
+            body.print-k-value #mainContainer, 
+            body.print-k-value #masterSummaryModal, 
+            body.print-k-value #kIndexAdminModal, 
+            body.print-k-value #projectModal { display: none !important; }
+            
+            body.print-k-value #kValueModal {
+                position: relative !important;
+                inset: auto !important;
+                background: white !important;
+                display: block !important;
+                padding: 0 !important;
+            }
+            body.print-k-value #kValueModal > div {
+                box-shadow: none !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                border: none !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            body.print-k-value .overflow-y-auto, body.print-k-value .max-h-[95vh], body.print-k-value .max-h-48 {
+                overflow: visible !important;
+                max-height: none !important;
+            }
+            body.print-k-value .no-print { display: none !important; }
+            
+            /* ปรับสีสำหรับการพิมพ์ค่า K ประหยัดหมึก */
+            body.print-k-value .bg-gray-800 { background-color: white !important; color: black !important; border: 2px solid #e5e7eb !important; }
+            body.print-k-value .text-white { color: black !important; }
+            body.print-k-value .bg-gray-700 { background-color: #f9fafb !important; border: 1px solid #e5e7eb !important; color: black !important;}
+            body.print-k-value .text-emerald-400, body.print-k-value .text-emerald-300 { color: #059669 !important; font-weight: bold; }
+            body.print-k-value .text-red-400, body.print-k-value .text-red-300 { color: #dc2626 !important; font-weight: bold; }
+            body.print-k-value .bg-white { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+            body.print-k-value input, body.print-k-value select {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                appearance: none;
+                -webkit-appearance: none;
+                color: black !important;
+            }
         }
     </style>
 </head>
 <body class="py-8 px-4" id="appBody">
 
+    <!-- 🌟 ส่วนที่ 1: ระบบตารางราคากลางหลัก 🌟 -->
     <div class="max-w-6xl mx-auto bg-white p-8 shadow-xl print-shadow-none present-shadow-none rounded-lg border-t-4 border-t-sky-500 transition-all" id="mainContainer">
         
         <!-- Header & Action Buttons -->
         <div class="mb-6 border-b-2 border-sky-600 pb-4 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4">
             <div class="flex items-center gap-4">
-                <!-- โลโก้หน่วยงาน (หมวกวิศวกรสีขาว) -->
                 <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-sky-400 to-blue-700 text-white rounded-full flex items-center justify-center shadow-md border-4 border-sky-50 flex-shrink-0 no-print">
                     <i class="fa-solid fa-helmet-safety text-2xl md:text-3xl"></i>
                 </div>
@@ -130,6 +174,12 @@
                     <button onclick="window.openMasterSummaryModal()" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="ดูตารางสรุปยอดรวมงบประมาณของทุกโครงการ">
                         <i class="fa-solid fa-table-list mr-1"></i> สรุปทุกโครงการ
                     </button>
+                    
+                    <!-- ปุ่มคำนวณค่า K -->
+                    <button onclick="window.openKValueModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="เครื่องมือคำนวณเงินชดเชยค่าก่อสร้าง">
+                        <i class="fa-solid fa-calculator mr-1"></i> คำนวณค่า K
+                    </button>
+
                     <div class="w-px h-8 bg-gray-300 mx-1 hidden sm:block"></div>
                     <button onclick="window.clearAllData()" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="ล้างหน้าจอเพื่อเริ่มโครงการใหม่">
                         <i class="fa-solid fa-file-circle-plus mr-1"></i> สร้างใหม่
@@ -176,7 +226,7 @@
             <p class="text-sm text-gray-600" id="displayDistrictName">ผู้จัดทำ: ...</p>
         </div>
 
-        <!-- Settings & Template Button -->
+        <!-- Settings -->
         <div class="mb-4 flex flex-col gap-4 no-print bg-gray-50 p-4 rounded-lg border border-gray-200 present-shadow-none">
             <div class="flex flex-wrap justify-between items-center gap-4">
                 <div class="flex flex-wrap gap-4">
@@ -192,7 +242,6 @@
                     </div>
                 </div>
                 
-                <!-- ส่วนสรุปภาพรวม (Dashboard Summary) -->
                 <div class="flex gap-4 items-center bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm ml-auto">
                     <div class="text-right hidden sm:block">
                         <div class="text-xs text-gray-500 font-semibold">ผลกระทบภาพรวม</div>
@@ -255,8 +304,9 @@
                         <td class="p-4 border-r border-gray-300 no-print"></td>
                         <td class="p-4 no-print no-present"></td>
                     </tr>
+                    <!-- ช่องกรอกงบประมาณที่ได้รับจัดสรร -->
                     <tr class="bg-indigo-50 border-t border-gray-300">
-                        <td class="p-4 font-bold border-r border-gray-300 text-base text-right text-indigo-800">งบประมาณที่ได้รับจัดสรร</td>
+                        <td class="p-4 font-bold border-r border-gray-300 text-base text-right text-indigo-800">งบประมาณที่ได้รับจัดสรร (บาท)</td>
                         <td class="p-3 border-r border-gray-300" colspan="2">
                             <input type="text" id="allocatedBudget" placeholder="ระบุงบประมาณ (บาท)" class="w-full p-2 border border-indigo-200 rounded text-right font-bold text-indigo-800 focus:border-indigo-500 bg-white" onchange="window.calculateTotals()">
                         </td>
@@ -267,12 +317,12 @@
                 </tfoot>
             </table>
         </div>
-
     </div>
 
-    <!-- Master Summary Modal (Cloud Data) -->
+
+    <!-- 🌟 ส่วนที่ 2: หน้าต่างสรุปทุกโครงการ (Master Summary) 🌟 -->
     <div id="masterSummaryModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 max-w-6xl w-full shadow-2xl transform transition-all flex flex-col max-h-[90vh]">
+        <div class="bg-white rounded-lg p-6 max-w-7xl w-full shadow-2xl transform transition-all flex flex-col max-h-[90vh]">
             
             <div class="flex justify-between items-start mb-4 border-b pb-4">
                 <div>
@@ -282,7 +332,7 @@
                 <button onclick="window.closeMasterSummaryModal()" class="text-gray-400 hover:text-red-500 text-2xl no-print-summary"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <!-- ตัวกรองข้อมูลและปุ่มพิมพ์ (ซ่อนตอนพิมพ์) -->
+            <!-- ตัวกรองข้อมูลและปุ่มพิมพ์ -->
             <div class="flex flex-wrap justify-between items-center mb-4 gap-4 no-print-summary bg-teal-50/50 p-3 rounded-lg border border-teal-100">
                 <div class="flex items-center gap-2">
                     <label class="font-bold text-teal-800 text-sm"><i class="fa-solid fa-filter mr-1"></i> กรองข้อมูลตามอำเภอ:</label>
@@ -320,7 +370,6 @@
                         </tr>
                     </thead>
                     <tbody id="masterSummaryBody" class="thai-number divide-y divide-gray-200 text-sm">
-                        <!-- Data will be populated here -->
                     </tbody>
                     <tfoot class="bg-teal-100 border-t-2 border-teal-400 sticky bottom-0 z-10">
                         <tr>
@@ -346,7 +395,8 @@
         </div>
     </div>
 
-    <!-- Project Manager Modal (Cloud) -->
+
+    <!-- 🌟 ส่วนที่ 3: หน้าต่างแฟ้มโครงการบนคลาวด์ 🌟 -->
     <div id="projectModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 no-print">
         <div class="bg-white rounded-lg p-6 max-w-3xl w-full shadow-2xl transform transition-all flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center mb-4 border-b pb-2">
@@ -363,7 +413,6 @@
                 </div>
             </div>
 
-            <!-- Backup Options -->
             <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200 shrink-0">
                 <h4 class="font-bold text-indigo-900 mb-2 text-sm"><i class="fa-solid fa-shield-halved mr-1"></i> ระบบส่งออก/นำเข้าข้อมูลแบบ Offline (Backup)</h4>
                 <div class="flex flex-wrap gap-2">
@@ -383,40 +432,347 @@
         </div>
     </div>
 
-    <!-- Template Manager Modal (Cloud Shared) -->
-    <div id="templateModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 no-print">
-        <div class="bg-white rounded-lg p-6 max-w-lg w-full shadow-2xl transform transition-all flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 class="text-xl font-bold text-gray-900"><i class="fa-solid fa-layer-group text-orange-500 mr-2"></i>เทมเพลตส่วนกลาง (Shared Templates)</h3>
-                <button onclick="window.closeTemplateModal()" class="text-gray-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
+
+    <!-- 🌟 ส่วนที่ 4: หน้าต่างคำนวณค่า K (K-Value Calculator Modal) 🌟 -->
+    <div id="kValueModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-[60] no-print">
+        <div class="bg-gray-50 rounded-lg p-6 max-w-5xl w-full shadow-2xl transform transition-all flex flex-col max-h-[95vh] overflow-y-auto border-t-4 border-t-purple-600">
+            <div class="flex justify-between items-center mb-6 border-b pb-4 no-print">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-700 text-white rounded-lg flex items-center justify-center shadow-md">
+                        <i class="fa-solid fa-calculator text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">ระบบสืบค้นดัชนีและคำนวณค่า K อัตโนมัติ</h3>
+                        <p class="text-sm text-gray-500">เครื่องมือช่วยประเมินเงินชดเชยค่าก่อสร้าง (Escalation Factor) ของทางราชการ</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 items-center">
+                    <!-- ปุ่มเชื่อมต่อระบบฐานข้อมูลดัชนี -->
+                    <button onclick="window.openKIndexAdminModal()" class="bg-indigo-100 hover:bg-indigo-600 hover:text-white text-indigo-700 font-semibold py-2 px-4 rounded shadow-sm transition text-sm flex items-center">
+                        <i class="fa-solid fa-database mr-2"></i> ฐานข้อมูลดัชนี
+                    </button>
+                    <button onclick="window.closeKValueModal()" class="text-gray-400 hover:text-red-500 text-2xl ml-2"><i class="fa-solid fa-xmark"></i></button>
+                </div>
             </div>
 
-            <div class="bg-orange-50 p-4 rounded-lg border border-orange-200 mb-6 shrink-0 mt-4">
-                <h4 class="font-bold text-gray-800 mb-2 text-sm">สร้างเทมเพลตมาตรฐานเก็บไว้บนคลาวด์</h4>
-                <div class="flex gap-2">
-                    <input type="text" id="newTemplateName" placeholder="ตั้งชื่อเทมเพลตมาตรฐาน..." class="flex-1 border rounded px-3 py-2 text-sm text-gray-800 focus:border-orange-500">
-                    <button onclick="window.saveCurrentAsTemplateToCloud()" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded text-sm transition shadow-sm whitespace-nowrap">
-                        <i class="fa-solid fa-cloud-arrow-up mr-1"></i> บันทึกขึ้นระบบ
+            <!-- ส่วนหัวแสดงตอนปริ้นท์เท่านั้น -->
+            <div class="hidden print:block text-center mb-6 pb-4 border-b-2 border-gray-800">
+                <h2 class="text-2xl font-bold">รายงานผลการคำนวณเงินชดเชยค่าก่อสร้าง (ค่า K)</h2>
+                <p class="text-gray-700 mt-1">กองช่าง องค์การบริหารส่วนจังหวัดพิษณุโลก</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Column -->
+                <div class="lg:col-span-1 space-y-4">
+                    <!-- 1. ข้อมูลโครงการ -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <h4 class="font-bold text-indigo-900 mb-3 border-l-4 border-indigo-500 pl-2">1. ข้อมูลโครงการ</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">ชื่อโครงการ:</label>
+                                <div id="kProjectNameDisplay" class="w-full bg-gray-100 border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-800 font-semibold truncate">-</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">ผู้รับจ้าง:</label>
+                                <input type="text" id="kContractor" placeholder="ระบุชื่อผู้รับจ้าง..." class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-indigo-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">สัญญาจ้างเลขที่:</label>
+                                    <input type="text" id="kContractNo" placeholder="เช่น 1/2567" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">ค่างานตามสัญญา (บาท):</label>
+                                    <input type="text" id="kContractValue" placeholder="0.00" class="w-full border border-gray-300 rounded px-2 py-1.5 text-right font-bold focus:border-indigo-500" onfocus="window.handleKFocus(this)" onblur="window.handleKBlur(this)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. ข้อมูลสัญญาจ้างและการส่งมอบ -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <h4 class="font-bold text-blue-900 mb-3 border-l-4 border-blue-500 pl-2">2. สัญญาจ้างและการส่งมอบ</h4>
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">วันเริ่มสัญญาจ้าง:</label>
+                                    <input type="date" id="kStartDate" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">วันสิ้นสุดสัญญาจ้าง:</label>
+                                    <input type="date" id="kEndDate" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">ส่งงานครั้งที่:</label>
+                                    <select id="kInstallment" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500" onchange="window.check90Days()">
+                                        <option value="1">งวดงานที่ 1</option>
+                                        <option value="2">งวดงานที่ 2</option>
+                                        <option value="3">งวดงานที่ 3</option>
+                                        <option value="4">งวดงานที่ 4</option>
+                                        <option value="5">งวดงานที่ 5</option>
+                                        <option value="6">งวดงานที่ 6</option>
+                                        <option value="last">งวดสุดท้าย</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">วันที่ส่งมอบงาน:</label>
+                                    <input type="date" id="kDeliveryDate" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500" onchange="window.check90Days()">
+                                </div>
+                            </div>
+                            <!-- 90 Days Status -->
+                            <div id="k90DaysStatusBox" class="hidden mt-2 p-2 rounded text-center text-sm font-bold border">
+                                <!-- Status goes here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="lg:col-span-2 space-y-4">
+                    
+                    <!-- 3. รายการก่อสร้างที่อยู่ในข่ายคำนวณค่า K -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <h4 class="font-bold text-orange-900 mb-3 border-l-4 border-orange-500 pl-2">3. รายการก่อสร้างที่อยู่ในข่ายคำนวณค่า K</h4>
+                        
+                        <div class="max-h-48 overflow-y-auto border border-gray-300 rounded bg-white text-sm shadow-inner">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-gray-100 text-gray-700 sticky top-0 shadow-sm z-10">
+                                    <tr>
+                                        <th class="p-2 border-b border-r border-gray-200 w-10 text-center font-semibold">ลำดับ</th>
+                                        <th class="p-2 border-b border-r border-gray-200 font-semibold">รายการงานก่อสร้าง</th>
+                                        <th class="p-2 border-b border-r border-gray-200 w-32 text-right font-semibold">ค่างาน (บาท)</th>
+                                        <th class="p-2 border-b border-r border-gray-200 w-52 text-center font-semibold">เลือกสูตรค่า K อ้างอิง</th>
+                                        <th class="p-2 border-b w-10 text-center font-semibold no-print">ลบ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kEligibleItemsList" class="thai-number divide-y divide-gray-200">
+                                    <!-- JS will populate from main table or user input -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-2 mb-4 no-print">
+                            <button onclick="window.addKValueRow()" class="text-sm bg-orange-100 hover:bg-orange-500 hover:text-white text-orange-700 font-semibold py-1.5 px-3 rounded transition shadow-sm">
+                                <i class="fa-solid fa-plus mr-1"></i> เพิ่มรายการ
+                            </button>
+                            <button onclick="window.syncFromMainTable()" class="text-sm bg-gray-100 hover:bg-gray-600 hover:text-white text-gray-700 font-semibold py-1.5 px-3 rounded transition shadow-sm">
+                                <i class="fa-solid fa-rotate mr-1"></i> ดึงข้อมูลจากตารางหลักใหม่
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 pt-4 mt-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-blue-800 mb-1">เดือนเปิดซอง (เดือนฐาน - Index o):</label>
+                                <input type="month" id="kBaseMonth" class="w-full border border-blue-300 rounded px-2 py-1.5 text-sm focus:border-blue-500" onchange="window.updateKIndices()" value="2024-01">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-purple-800 mb-1">เดือนส่งงาน (เดือนคำนวณ - Index t):</label>
+                                <input type="month" id="kTargetMonth" class="w-full border border-purple-300 rounded px-2 py-1.5 text-sm focus:border-purple-500" onchange="window.updateKIndices()" value="2024-04">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ค่าดัชนีที่ดึงมาจากฐานข้อมูล Cloud -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-2 border-l-4 border-gray-500 pl-2">
+                            <h4 class="font-bold text-gray-800">ค่าดัชนีกระทรวงพาณิชย์</h4>
+                            <span id="kDbStatusBadge" class="text-[0.65rem] font-bold px-2 py-1 rounded bg-gray-100 text-gray-500">สถานะ: ตรวจสอบข้อมูล...</span>
+                        </div>
+                        <table class="w-full text-center border-collapse border border-gray-300 text-sm">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-700">
+                                    <th class="p-2 border border-gray-300">ดัชนี</th>
+                                    <th class="p-2 border border-gray-300 bg-blue-50">เดือนฐาน (o)<br><span id="kDisplayBaseMonth" class="text-xs font-normal text-blue-600">-</span></th>
+                                    <th class="p-2 border border-gray-300 bg-purple-50">เดือนส่งงาน (t)<br><span id="kDisplayTargetMonth" class="text-xs font-normal text-purple-600">-</span></th>
+                                    <th class="p-2 border border-gray-300">สัดส่วน (t/o)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="thai-number" id="kIndicesTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- 🌟 ตารางผลคำนวณรายหมวดงาน 🌟 -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <h4 class="font-bold text-indigo-800 mb-2 border-l-4 border-indigo-500 pl-2">ตารางแสดงผลคำนวณค่า K และเงินชดเชย (แยกตามหมวดงาน)</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-center border-collapse border border-gray-300 text-sm">
+                                <thead>
+                                    <tr class="bg-indigo-50 text-indigo-900 border-b border-gray-300">
+                                        <th class="p-2 border border-gray-300 w-10">ลำดับ</th>
+                                        <th class="p-2 border border-gray-300 text-left">รายการงานก่อสร้าง</th>
+                                        <th class="p-2 border border-gray-300 text-right w-28">ค่างาน (บาท)</th>
+                                        <th class="p-2 border border-gray-300 w-16">ค่า K</th>
+                                        <th class="p-2 border border-gray-300 w-20">ผลต่าง</th>
+                                        <th class="p-2 border border-gray-300 text-right w-28">เงินชดเชย (บาท)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="thai-number" id="kCalculationResultsBody">
+                                    <tr><td colspan="6" class="p-4 border border-gray-300 text-gray-500 italic">รอข้อมูลเพื่อคำนวณ...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- 🌟 ปรับปรุงส่วนสรุปผลท้ายสุดให้เข้าใจง่ายขึ้น 🌟 -->
+                    <div class="bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-gray-500 transition-colors duration-300" id="summaryContainerCard">
+                        <div class="flex items-center justify-between mb-4 border-b border-gray-600 pb-3">
+                            <h3 class="text-lg font-bold flex items-center"><i class="fa-solid fa-file-invoice-dollar mr-2 text-gray-300" id="summaryIcon"></i> สรุปยอดเงินชดเชยค่าก่อสร้าง (Net Escalation)</h3>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                            <div class="bg-gray-700 p-3 rounded-lg border border-gray-600 flex flex-col justify-center shadow-inner">
+                                <span class="text-xs text-gray-400 mb-1">รวมค่างานที่นำมาคำนวณตามสูตร</span>
+                                <span class="text-2xl font-bold thai-number text-blue-300" id="kTotalCalculatedWork">0.00 <span class="text-sm font-normal text-gray-400">บาท</span></span>
+                            </div>
+                            <div class="bg-gray-700 p-3 rounded-lg border border-gray-600 flex flex-col justify-center shadow-inner">
+                                <span class="text-xs text-gray-400 mb-1">จำนวนรายการที่เข้าเงื่อนไข</span>
+                                <span class="text-2xl font-bold thai-number text-purple-300"><span id="kTotalItemsMatched">0</span> <span class="text-sm font-normal text-gray-400">รายการ</span></span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-lg text-center shadow-inner relative overflow-hidden">
+                            <div class="text-sm text-gray-500 font-bold mb-1">ยอดเงินชดเชยสุทธิ (คิดตามกฎ 4% แยกรายหมวดแล้ว)</div>
+                            <div class="text-4xl md:text-5xl font-black thai-number my-3 tracking-tight text-gray-400 transition-colors duration-300" id="kCompensation">
+                                0.00 <span class="text-xl font-bold">บาท</span>
+                            </div>
+                            
+                            <div class="mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold border border-gray-300 bg-gray-100 text-gray-600 transition-all duration-300" id="kActionBadge">
+                                - รอข้อมูลเพื่อประมวลผล -
+                            </div>
+                            <p class="text-xs text-gray-500 mt-3 leading-relaxed font-medium" id="kActionDesc">
+                                กรุณาตรวจสอบข้อมูลค่างานและเลือกสูตรให้ครบถ้วน
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 🌟 ส่วนวิเคราะห์ทางเศรษฐศาสตร์ (เพิ่มใหม่) 🌟 -->
+                    <div class="bg-indigo-50 p-5 rounded-xl shadow-sm border border-indigo-200 mt-6 no-print hidden" id="economicAnalysisCard">
+                        <div class="flex items-center mb-3">
+                            <i class="fa-solid fa-chart-line text-indigo-600 text-xl mr-2"></i>
+                            <h3 class="text-lg font-bold text-indigo-900">บทวิเคราะห์ความคุ้มค่าทางเศรษฐศาสตร์ (Executive Analysis)</h3>
+                        </div>
+                        <p class="text-sm text-indigo-700 mb-4 border-b border-indigo-200 pb-3">เปรียบเทียบระหว่าง "ต้นทุนที่เพิ่มขึ้นจริงจากหน้าหลัก" ชนกับ "เงินชดเชยค่า K ที่คำนวณได้"</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div class="bg-white p-3 rounded shadow-sm border border-gray-200">
+                                <div class="text-xs text-gray-500 font-bold">1. ต้นทุนก่อสร้างที่เพิ่มขึ้นจริง (ราคาตลาด)</div>
+                                <div class="text-xl font-black text-orange-600 thai-number mt-1" id="ecoActualCostDiff">0.00 บาท</div>
+                            </div>
+                            <div class="bg-white p-3 rounded shadow-sm border border-gray-200">
+                                <div class="text-xs text-gray-500 font-bold">2. เงินชดเชยค่า K ตามสิทธิ (ตามระเบียบ)</div>
+                                <div class="text-xl font-black text-emerald-600 thai-number mt-1" id="ecoKCompensation">0.00 บาท</div>
+                            </div>
+                        </div>
+
+                        <!-- 🌟 พื้นที่สำหรับแสดงกราฟเส้น 🌟 -->
+                        <div class="bg-white p-3 rounded shadow-sm border border-gray-200 mb-4 relative h-[250px] w-full">
+                            <canvas id="ecoChart"></canvas>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-lg shadow-inner border-l-4 border-indigo-500">
+                            <div class="flex justify-between items-end mb-1">
+                                <span class="text-sm font-bold text-gray-800">ช่องว่างส่วนต่าง (Risk Gap):</span>
+                                <span class="text-2xl font-black thai-number text-indigo-700" id="ecoGapValue">0.00 บาท</span>
+                            </div>
+                            <p class="text-sm font-semibold mt-2" id="ecoConclusionText">- รอการประมวลผล -</p>
+                        </div>
+                    </div>
+                    <!-- สิ้นสุดส่วนวิเคราะห์ทางเศรษฐศาสตร์ -->
+
+                </div>
+            </div>
+            
+            <!-- 🌟 ปุ่มควบคุมด้านล่าง (เพิ่มปุ่ม บันทึก และ พิมพ์รายงาน) 🌟 -->
+            <div class="flex flex-col sm:flex-row justify-between items-center border-t mt-6 pt-4 gap-4 no-print">
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="window.printKValueReport()" class="bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm flex-1 sm:flex-none">
+                        <i class="fa-solid fa-print mr-1"></i> พิมพ์รายงาน
+                    </button>
+                    <button onclick="window.saveKValueData()" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm flex-1 sm:flex-none">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกข้อมูลค่า K
                     </button>
                 </div>
-            </div>
-
-            <h4 class="font-bold text-gray-800 mb-2">เทมเพลตที่พร้อมใช้งาน (จากทุกอำเภอ):</h4>
-            <div class="overflow-y-auto flex-1 pr-2 space-y-2" id="templateListContainer">
-                <div class="flex justify-center items-center py-4">
-                    <i class="fa-solid fa-spinner fa-spin text-orange-500 mr-2"></i>
-                    <span class="text-gray-500 text-sm">กำลังโหลดเทมเพลต...</span>
-                </div>
-            </div>
-
-            <div class="mt-4 pt-4 border-t text-right shrink-0">
-                <button onclick="window.closeTemplateModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded shadow-sm transition text-sm">ปิดหน้าต่าง</button>
+                <button onclick="window.closeKValueModal()" class="w-full sm:w-auto bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded shadow-sm transition text-sm">
+                    ปิดหน้าต่าง
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Custom Dialog System -->
+    <!-- 🌟 ส่วนที่ 5: หน้าต่างจัดการฐานข้อมูลดัชนี (Admin Index DB) 🌟 -->
+    <div id="kIndexAdminModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-[70] no-print">
+        <div class="bg-white rounded-lg p-6 max-w-3xl w-full shadow-2xl transform transition-all flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 class="text-xl font-bold text-gray-900"><i class="fa-solid fa-database text-indigo-600 mr-2"></i>จัดการฐานข้อมูลดัชนีกระทรวงพาณิชย์ (Cloud DB)</h3>
+                <button onclick="window.closeKIndexAdminModal()" class="text-gray-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4 bg-indigo-50 p-3 rounded border border-indigo-100">
+                <i class="fa-solid fa-circle-info text-indigo-500 mr-1"></i> 
+                ให้นำตัวเลขดัชนีที่กระทรวงพาณิชย์ประกาศในแต่ละเดือนมากรอกไว้ที่นี่ เมื่อกดบันทึก ข้อมูลจะถูกเก็บไว้บน Cloud และนายช่างทุกคนจะสามารถดึงไปใช้คำนวณค่า K ในโปรแกรมได้ทันทีครับ
+            </p>
+
+            <!-- ลิงก์กระทรวงพาณิชย์ -->
+            <div class="bg-sky-50 p-4 rounded-lg border border-sky-200 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h4 class="font-bold text-sky-900"><i class="fa-solid fa-link mr-1"></i> แหล่งอ้างอิงข้อมูลดัชนี (กระทรวงพาณิชย์)</h4>
+                    <p class="text-xs text-sky-700 mt-1">คลิกปุ่มด้านขวาเพื่อเปิดหน้าต่างใหม่ ไปยังเว็บไซต์ สนค. เพื่อดูค่าดัชนีประจำเดือน</p>
+                </div>
+                <a href="https://index.tpso.go.th/escalation-factors/report-monthly" target="_blank" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm whitespace-nowrap shrink-0">
+                    <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> เปิดเว็บ สนค.
+                </a>
+            </div>
+
+            <!-- ระบบ Smart Paste VLOOKUP Engine -->
+            <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200 mb-6">
+                <h4 class="font-bold text-emerald-900 mb-2"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> ระบบวางตัวเลขด่วน (VLOOKUP อัจฉริยะ)</h4>
+                <p class="text-xs text-emerald-700 mb-2">ก๊อปปี้ข้อความทั้งหมดจากหน้า PDF (Ctrl+A, Ctrl+C) แล้วนำมา <b>วาง (Paste)</b> ในช่องนี้ ระบบจะสแกนหาคำและดึงตัวเลขลงช่องให้ตรงเป๊ะ 100%!</p>
+                <input type="text" id="smartPasteInput" placeholder="คลิกที่นี่... แล้วกด Ctrl+V (วาง) ข้อมูลที่ก๊อปปี้มาจาก PDF" class="w-full border border-emerald-300 rounded px-3 py-2 text-sm focus:border-emerald-500 font-mono shadow-inner" onpaste="window.handleSmartPaste(event)">
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                <div class="flex items-center gap-4">
+                    <label class="font-bold text-gray-800">เลือกเดือนที่จะบันทึก:</label>
+                    <input type="month" id="adminIndexMonth" class="border border-gray-300 rounded px-3 py-2 text-sm focus:border-indigo-500 shadow-sm" onchange="window.loadKIndexForEdit()">
+                    <span id="adminDbStatus" class="text-sm font-semibold text-gray-500">รอเลือกเดือน...</span>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button onclick="window.downloadKIndexExcelTemplate()" class="text-xs bg-green-100 hover:bg-green-600 hover:text-white text-green-700 font-semibold py-1.5 px-3 rounded transition shadow-sm">
+                        <i class="fa-solid fa-file-excel mr-1"></i> โหลดฟอร์ม Excel
+                    </button>
+                    <label class="text-xs bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-1.5 px-3 rounded transition shadow-sm cursor-pointer mb-0">
+                        <i class="fa-solid fa-file-import mr-1"></i> นำเข้า Excel (หลายเดือน)
+                        <input type="file" accept=".xlsx, .xls, .csv" class="hidden" onchange="window.uploadKIndexExcel(event)">
+                    </label>
+                </div>
+            </div>
+
+            <div class="overflow-y-auto flex-1 pr-2 mb-6">
+                <!-- 2 คอลัมน์ เพื่อให้ตรงกับโครงสร้าง PDF ของ สนค. -->
+                <div class="grid grid-cols-2 gap-3" id="adminIndexFields">
+                    <!-- Fields will be generated by JS in specific order -->
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center border-t pt-4 shrink-0">
+                <div class="text-xs text-gray-500">* ข้อมูลจะถูกบันทึกแยกรายเดือน และแชร์ใช้งานร่วมกันทั้งจังหวัด</div>
+                <div class="flex gap-2">
+                    <button onclick="window.closeKIndexAdminModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded shadow-sm transition text-sm">ยกเลิก</button>
+                    <button onclick="window.saveKIndexToCloud()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded shadow-sm transition text-sm">
+                        <i class="fa-solid fa-cloud-arrow-up mr-1"></i> บันทึกข้อมูลขึ้น Cloud
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 🌟 ส่วนระบบประมวลผล (JavaScript) 🌟 -->
     <script>
+        // Custom Dialog System
         window.showDialog = function(message, isConfirm = false, onConfirm = null) {
             const dialogId = 'customDialog_' + Date.now();
             const dialogHtml = `
@@ -452,10 +808,12 @@
         import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.myChart = null;
+        window.ecoChart = null; // 🌟 ประกาศตัวแปรสำหรับกราฟวิเคราะห์เศรษฐศาสตร์ 🌟
         window.isPresentationMode = false;
         window.currentProjectId = null;
         window.cloudProjects = [];
-        window.cloudTemplates = [];
+        window.cloudKIndices = {}; 
+        window.savedKValueItems = []; // เก็บสถานะรายการในตารางค่า K
 
         // ======================================================================
         // 🔴 1. ตั้งค่า FIREBASE ของท่านที่นี่ (สำหรับการนำไปเปิดบน GitHub Pages) 🔴
@@ -504,7 +862,6 @@
                 currentUser = user;
                 if (user) {
                     setupRealtimeListener();
-                    setupTemplateListener();
                 } else {
                     setCloudStatus('offline', 'ออฟไลน์');
                 }
@@ -534,15 +891,12 @@
             }
         }
 
-        // ==========================================
-        // ระบบดึงข้อมูลจาก Cloud (Real-time Listeners)
-        // ==========================================
         function setupRealtimeListener() {
             if (!currentUser || !db) return;
             setCloudStatus('connecting', 'ซิงค์ข้อมูล..');
 
+            // Listen to Projects
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'cost_breakdown_projects');
-            
             onSnapshot(colRef, (snapshot) => {
                 window.cloudProjects = [];
                 snapshot.forEach(doc => {
@@ -561,28 +915,38 @@
                 console.error("Listen failed: ", error);
                 setCloudStatus('error', 'ซิงค์ล้มเหลว');
             });
-        }
 
-        function setupTemplateListener() {
-            if (!currentUser || !db) return;
-            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'cost_templates');
-            
-            onSnapshot(colRef, (snapshot) => {
-                window.cloudTemplates = [];
+            // Listen to K-Indices Database
+            const kIndexColRef = collection(db, 'artifacts', appId, 'public', 'data', 'k_indices');
+            onSnapshot(kIndexColRef, (snapshot) => {
+                window.cloudKIndices = {};
                 snapshot.forEach(doc => {
-                    window.cloudTemplates.push(doc.data());
+                    window.cloudKIndices[doc.id] = doc.data();
                 });
-                if (!document.getElementById('templateModal').classList.contains('hidden')) {
-                    window.renderTemplateList();
+                // หากเปิดหน้าต่างคำนวณอยู่ ให้อัปเดตตารางดัชนีทันที
+                if (!document.getElementById('kValueModal').classList.contains('hidden')) {
+                    window.updateKIndices();
                 }
             }, (error) => {
-                console.error("Template Listen failed");
+                console.error("K-Index Listen failed: ", error);
             });
         }
 
-        // ==========================================
-        // ฟังก์ชันบันทึกข้อมูล (Save/Delete to Cloud)
-        // ==========================================
+        // เก็บข้อมูลจากตารางค่า K
+        window.getKValueItems = function() {
+            const items = [];
+            if (document.getElementById('kEligibleItemsList')) {
+                document.querySelectorAll('#kEligibleItemsList tr.k-item-row').forEach(row => {
+                    items.push({
+                        name: row.querySelector('.k-item-name').value,
+                        cost: window.unformatNumber(row.querySelector('.k-row-cost').value),
+                        formula: row.querySelector('.k-item-formula').value
+                    });
+                });
+            }
+            return items;
+        };
+
         window.saveProjectToCloud = async function(silent = false) {
             if (!currentUser || !db) {
                 window.showDialog("ระบบคลาวด์ยังไม่พร้อมใช้งาน หรือท่านยังไม่ได้ตั้งค่ารหัส Firebase ครับ");
@@ -614,6 +978,21 @@
             });
 
             if (rows.length === 0) rows.push({taskName: "", oldCost: 0, newCost: 0, remark: ""});
+            
+            // เตรียมข้อมูลส่วนของการคำนวณค่า K
+            const kValueItemsToSave = window.getKValueItems();
+            const kValueData = {
+                contractor: document.getElementById('kContractor') ? document.getElementById('kContractor').value : '',
+                contractNo: document.getElementById('kContractNo') ? document.getElementById('kContractNo').value : '',
+                contractValue: document.getElementById('kContractValue') ? document.getElementById('kContractValue').value : '',
+                startDate: document.getElementById('kStartDate') ? document.getElementById('kStartDate').value : '',
+                endDate: document.getElementById('kEndDate') ? document.getElementById('kEndDate').value : '',
+                installment: document.getElementById('kInstallment') ? document.getElementById('kInstallment').value : 'last',
+                deliveryDate: document.getElementById('kDeliveryDate') ? document.getElementById('kDeliveryDate').value : '',
+                baseMonth: document.getElementById('kBaseMonth') ? document.getElementById('kBaseMonth').value : '',
+                targetMonth: document.getElementById('kTargetMonth') ? document.getElementById('kTargetMonth').value : '',
+                items: kValueItemsToSave
+            };
 
             const projId = window.currentProjectId || 'proj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
 
@@ -627,6 +1006,7 @@
                 totalCost: document.getElementById('totalNew').innerText, 
                 allocatedBudget: document.getElementById('allocatedBudget').value,
                 rows: rows,
+                kValueData: kValueData, // ฝังชุดข้อมูลค่า K เข้าไปในโปรเจกต์ด้วย
                 updatedAt: new Date().toLocaleString('th-TH'),
                 timestamp: Date.now(),
                 ownerUid: currentUser.uid
@@ -641,6 +1021,7 @@
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'cost_breakdown_projects', projId);
                 await setDoc(docRef, projectData);
                 window.currentProjectId = projId;
+                window.savedKValueItems = kValueItemsToSave; // Update in-memory state
 
                 if(!silent) {
                     indicator.innerHTML = '<i class="fa-solid fa-cloud-check"></i> บันทึกข้อมูลแล้ว';
@@ -669,70 +1050,6 @@
             });
         };
 
-        window.saveCurrentAsTemplateToCloud = async function() {
-            if (!currentUser || !db) {
-                window.showDialog("ระบบคลาวด์ยังไม่พร้อมใช้งาน");
-                return;
-            }
-
-            const nameInput = document.getElementById('newTemplateName');
-            const templateName = nameInput.value.trim();
-            
-            if (!templateName) {
-                window.showDialog("กรุณาตั้งชื่อเทมเพลตมาตรฐานก่อนบันทึกครับ");
-                nameInput.focus();
-                return;
-            }
-
-            const itemsToSave = [];
-            document.querySelectorAll('#tableBody tr').forEach(tr => {
-                const taskName = tr.querySelector('td:nth-child(1) input').value.trim();
-                const oldCost = window.unformatNumber(tr.querySelector('.old-cost').value);
-                if (taskName !== "") {
-                    itemsToSave.push({ taskName: taskName, oldCost: oldCost });
-                }
-            });
-
-            if (itemsToSave.length === 0) {
-                window.showDialog("ไม่พบรายการในตาราง กรุณาเพิ่มรายการก่อนสร้างเทมเพลตครับ");
-                return;
-            }
-
-            const tplId = 'tpl_' + Date.now();
-            const templateData = {
-                id: tplId,
-                name: templateName,
-                items: itemsToSave,
-                districtName: document.getElementById('districtName').value
-            };
-
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'cost_templates', tplId);
-                await setDoc(docRef, templateData);
-                nameInput.value = '';
-                window.showDialog(`บันทึกเทมเพลต "${templateName}" เข้าสู่ระบบส่วนกลางแล้วครับ! ทุกอำเภอสามารถนำไปใช้ได้ทันที`);
-            } catch(e) {
-                console.error("Template save error:", e);
-                window.showDialog("เกิดข้อผิดพลาดในการบันทึกเทมเพลต");
-            }
-        };
-
-        window.deleteTemplateFromCloud = function(id) {
-            if (!currentUser || !db) return;
-            window.showDialog("ต้องการลบเทมเพลตมาตรฐานนี้ออกจากเซิร์ฟเวอร์ส่วนกลางใช่หรือไม่?", true, async (confirmed) => {
-                if(!confirmed) return;
-                try {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'cost_templates', id);
-                    await deleteDoc(docRef);
-                } catch(e) {
-                    console.error("Delete temp error: ", e);
-                }
-            });
-        };
-
-        // ==========================================
-        // UI Render Functions (อ่านจาก Memory ที่ซิงค์แล้ว)
-        // ==========================================
         window.renderProjectList = function() {
             const container = document.getElementById('projectListContainer');
             
@@ -784,7 +1101,6 @@
             
             let filteredProjects = window.cloudProjects;
             
-            // กรองข้อมูลตามที่ผู้ใช้เลือก
             if (filterVal !== 'all') {
                 filteredProjects = window.cloudProjects.filter(p => p.districtName === filterVal);
             }
@@ -818,7 +1134,6 @@
                     });
                 }
                 
-                // แก้ไข: ใช้ window.unformatNumber เพื่อแปลงตัวเลขที่มีลูกน้ำ (Comma) ให้คำนวณได้ถูกต้อง
                 let projBudget = window.unformatNumber(proj.allocatedBudget);
                 
                 const projDiff = projNew - projOld;
@@ -870,7 +1185,6 @@
             document.getElementById('grandTotalNew').innerText = window.formatNumber(grandNew);
             document.getElementById('grandTotalBudget').innerText = grandBudget > 0 ? window.formatNumber(grandBudget) : '-';
             
-            // อัปเดตข้อความยอดรวมให้สอดคล้องกับที่กรอง
             const totalLabel = filterVal === 'all' ? 'ยอดรวมงบประมาณที่ต้องจัดหาเพิ่มทั้งจังหวัด' : `ยอดรวมงบประมาณที่ต้องจัดหาเพิ่ม (${filterVal})`;
             document.getElementById('grandTotalLabel').innerText = totalLabel;
             
@@ -899,40 +1213,6 @@
             }
         };
 
-        window.renderTemplateList = function() {
-            const container = document.getElementById('templateListContainer');
-            
-            if (window.cloudTemplates.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-center py-4 italic text-sm">ยังไม่มีเทมเพลตส่วนกลาง</p>';
-                return;
-            }
-
-            container.innerHTML = '';
-            window.cloudTemplates.forEach(template => {
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition';
-                
-                const itemCount = template.items ? template.items.length : 0;
-                const authorInfo = template.districtName ? `<span class="text-indigo-500 ml-1">(${template.districtName})</span>` : '';
-
-                div.innerHTML = `
-                    <div>
-                        <div class="font-bold text-gray-800">${template.name} ${authorInfo}</div>
-                        <div class="text-xs text-gray-500">มีรายการมาตรฐานทั้งหมด ${itemCount} รายการ</div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="window.loadTemplateData('${template.id}')" class="bg-blue-100 hover:bg-blue-600 hover:text-white text-blue-700 font-semibold py-1 px-3 rounded text-sm transition">
-                            <i class="fa-solid fa-hand-pointer mr-1"></i> เลือกใช้
-                        </button>
-                        <button onclick="window.deleteTemplateFromCloud('${template.id}')" class="bg-red-50 hover:bg-red-500 hover:text-white text-red-500 py-1 px-2 rounded text-sm transition" title="ลบเทมเพลต">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        };
-
         window.loadProjectData = function(id) {
             const project = window.cloudProjects.find(p => p.id === id);
             if (!project) return;
@@ -947,6 +1227,37 @@
                 if (project.chartType) document.getElementById('chartTypeSelector').value = project.chartType;
                 document.getElementById('allocatedBudget').value = project.allocatedBudget || '';
                 
+                // ดึงข้อมูลการคำนวณค่า K มาใส่เตรียมไว้
+                if (project.kValueData) {
+                    if(document.getElementById('kContractor')) document.getElementById('kContractor').value = project.kValueData.contractor || '';
+                    if(document.getElementById('kContractNo')) document.getElementById('kContractNo').value = project.kValueData.contractNo || '';
+                    if(document.getElementById('kContractValue')) document.getElementById('kContractValue').value = project.kValueData.contractValue || '';
+                    if(document.getElementById('kStartDate')) document.getElementById('kStartDate').value = project.kValueData.startDate || '';
+                    if(document.getElementById('kEndDate')) document.getElementById('kEndDate').value = project.kValueData.endDate || '';
+                    if(document.getElementById('kInstallment')) document.getElementById('kInstallment').value = project.kValueData.installment || 'last';
+                    if(document.getElementById('kDeliveryDate')) document.getElementById('kDeliveryDate').value = project.kValueData.deliveryDate || '';
+                    if(document.getElementById('kBaseMonth')) document.getElementById('kBaseMonth').value = project.kValueData.baseMonth || '';
+                    if(document.getElementById('kTargetMonth')) document.getElementById('kTargetMonth').value = project.kValueData.targetMonth || '';
+                    
+                    if (project.kValueData.items && project.kValueData.items.length > 0) {
+                        window.savedKValueItems = project.kValueData.items;
+                    } else {
+                        // รองรับข้อมูลที่บันทึกก่อนอัปเดตระบบตารางอิสระ
+                        const oldFormulas = project.kValueData.rowFormulas || [];
+                        window.savedKValueItems = (project.rows || []).map((r, idx) => ({
+                            name: r.taskName,
+                            cost: r.newCost,
+                            formula: oldFormulas[idx] || ''
+                        }));
+                    }
+                } else {
+                    window.savedKValueItems = [];
+                }
+                
+                if(document.getElementById('kEligibleItemsList')) {
+                    document.getElementById('kEligibleItemsList').innerHTML = ''; // Force refresh
+                }
+
                 window.updateHeaders();
 
                 const tbody = document.getElementById('tableBody');
@@ -973,32 +1284,6 @@
             }
         };
 
-        window.loadTemplateData = function(templateId) {
-            const template = window.cloudTemplates.find(t => t.id === templateId);
-            if (!template) return;
-
-            window.showDialog(`ต้องการล้างข้อมูลตารางปัจจุบัน และใช้เทมเพลตมาตรฐาน "${template.name}" ใช่หรือไม่?`, true, (confirmed) => {
-                if(!confirmed) return;
-                const tbody = document.getElementById('tableBody');
-                tbody.innerHTML = ''; 
-
-                if (template.items && template.items.length > 0) {
-                    template.items.forEach(item => {
-                        window.addRow(item.taskName, item.oldCost, '', ''); 
-                    });
-                } else {
-                    window.addRow();
-                }
-
-                window.closeTemplateModal();
-                window.calculateTotals();
-            });
-        };
-
-
-        // ==========================================
-        // General Core & UI Functions 
-        // ==========================================
         window.openProjectModal = function() {
             window.renderProjectList();
             document.getElementById('projectModal').classList.remove('hidden');
@@ -1016,21 +1301,10 @@
         window.closeMasterSummaryModal = function() {
             document.getElementById('masterSummaryModal').classList.add('hidden');
         };
-        window.openTemplateModal = function() {
-            window.renderTemplateList();
-            document.getElementById('templateModal').classList.remove('hidden');
-        };
-        window.closeTemplateModal = function() {
-            document.getElementById('templateModal').classList.add('hidden');
-            document.getElementById('newTemplateName').value = '';
-        };
 
-        // ฟังก์ชันสั่งพิมพ์ตารางสรุป
         window.printMasterSummary = function() {
-            // เพิ่ม Class พิเศษไปที่ body เพื่อให้ CSS จัดการซ่อนส่วนอื่นที่ไม่เกี่ยวข้อง
             document.body.classList.add('print-modal-only');
             window.print();
-            // หน่วงเวลาเล็กน้อยก่อนลบ Class ออก เพื่อให้ระบบหน้าจอ Print ทำงานเสร็จ
             setTimeout(() => {
                 document.body.classList.remove('print-modal-only');
             }, 500);
@@ -1044,6 +1318,14 @@
                 document.getElementById('oldFuelPrice').value = '30.33';
                 document.getElementById('newFuelPrice').value = '50.29';
                 document.getElementById('allocatedBudget').value = '';
+                
+                // เคลียร์ข้อมูล K-Value ด้วย
+                window.savedKValueItems = [];
+                if(document.getElementById('kEligibleItemsList')) document.getElementById('kEligibleItemsList').innerHTML = '';
+                if(document.getElementById('kContractor')) document.getElementById('kContractor').value = '';
+                if(document.getElementById('kContractNo')) document.getElementById('kContractNo').value = '';
+                if(document.getElementById('kContractValue')) document.getElementById('kContractValue').value = '';
+                
                 window.updateHeaders();
                 document.getElementById('chartTypeSelector').value = 'bar';
                 document.getElementById('tableBody').innerHTML = '';
@@ -1068,6 +1350,9 @@
             document.getElementById('headerNewPrice').innerText = `(น้ำมัน ${newPrice})`;
             if (window.myChart) window.calculateTotals();
         };
+
+        // ประกาศตัวแปร Global เพื่อส่งค่าไปใช้ข้ามฟังก์ชัน
+        window.globalNetCostDiff = 0;
 
         window.calculateTotals = function() {
             let totalOld = 0, totalNew = 0;
@@ -1144,7 +1429,6 @@
                 }
             }
             
-            // คำนวณสถานะงบประมาณที่ได้รับจัดสรร
             const allocatedBudgetInput = document.getElementById('allocatedBudget');
             if (allocatedBudgetInput) {
                 let budget = window.unformatNumber(allocatedBudgetInput.value);
@@ -1161,6 +1445,9 @@
                 }
             }
             
+            // 🌟 เก็บค่าส่วนต่างรวม ไว้ใช้ในโมดูลวิเคราะห์เศรษฐศาสตร์ 🌟
+            window.globalNetCostDiff = totalDiff;
+
             window.updateChart(chartLabels, chartDataOld, chartDataNew);
         };
 
@@ -1252,76 +1539,17 @@
             if (window.myChart) window.myChart.resize();
         };
 
-        // --- Export Functions ---
-        window.exportCSV = function() {
-            const projectName = document.getElementById('projectName').value.trim() || 'Cost_Breakdown';
-            const districtName = document.getElementById('districtName').value;
-            const oldPrice = document.getElementById('oldFuelPrice').value;
-            const newPrice = document.getElementById('newFuelPrice').value;
-
-            // สร้างโครงสร้างข้อมูลสำหรับ Excel
-            const ws_data = [
-                ["รายงานเปรียบเทียบผลกระทบราคากลางงานก่อสร้าง"],
-                ["ชื่อโครงการ:", projectName],
-                ["ผู้จัดทำ (อำเภอ):", districtName],
-                ["ราคาน้ำมันเดิม (บาท/ลิตร):", parseFloat(oldPrice), "ราคาน้ำมันใหม่ (บาท/ลิตร):", parseFloat(newPrice)],
-                [], // เว้นบรรทัด
-                ["ลำดับ", "หมวดงานก่อสร้าง", "ค่างานเดิม (บาท)", "ค่างานใหม่ (บาท)", "ส่วนต่าง (บาท)", "หมายเหตุ/สาเหตุหลัก"]
-            ];
-
-            let totalOld = 0, totalNew = 0;
-            let rowIndex = 1;
-
-            document.querySelectorAll('#tableBody tr').forEach(tr => {
-                const task = tr.querySelector('td:nth-child(1) input').value;
-                const oldC = window.unformatNumber(tr.querySelector('.old-cost').value);
-                const newC = window.unformatNumber(tr.querySelector('.new-cost').value);
-                const remark = tr.querySelector('td:nth-child(5) input').value;
-                const diff = newC - oldC;
-                
-                ws_data.push([rowIndex++, task, oldC, newC, diff, remark]);
-                totalOld += oldC;
-                totalNew += newC;
-            });
-
-            // เพิ่มบรรทัดรวมยอด
-            ws_data.push(["", "รวมค่างานต้นทุนทั้งสิ้น", totalOld, totalNew, totalNew - totalOld, ""]);
-            
-            const allocatedBudget = window.unformatNumber(document.getElementById('allocatedBudget').value);
-            if (allocatedBudget > 0) {
-                ws_data.push(["", "งบประมาณที่ได้รับจัดสรร", "", allocatedBudget, "", allocatedBudget >= totalNew ? "อยู่ในกรอบงบประมาณ" : "เกินงบประมาณ"]);
-            }
-
-            const ws = XLSX.utils.aoa_to_sheet(ws_data);
-
-            // ปรับความกว้างคอลัมน์ให้สวยงาม
-            ws['!cols'] = [
-                { wch: 8 },  // ลำดับ
-                { wch: 40 }, // หมวดงาน
-                { wch: 18 }, // ค่างานเดิม
-                { wch: 18 }, // ค่างานใหม่
-                { wch: 18 }, // ส่วนต่าง
-                { wch: 30 }  // หมายเหตุ
-            ];
-
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "รายละเอียดโครงการ");
-            XLSX.writeFile(wb, `${projectName}_รายละเอียด.xlsx`);
-        };
-
         window.exportMasterSummaryCSV = function() {
             if (window.cloudProjects.length === 0) { window.showDialog('ไม่มีข้อมูล'); return; }
             
-            // ใช้ค่าจากตัวกรองที่เลือกไว้มาสร้างชื่อไฟล์และข้อมูล
             const filterElement = document.getElementById('districtFilter');
             const filterVal = filterElement ? filterElement.value : 'all';
             const filterText = filterVal === 'all' ? 'ทุกอำเภอ' : filterVal;
             
-            // สร้างโครงสร้างข้อมูลสำหรับ Excel
             const ws_data = [
                 [`ตารางสรุปงบประมาณที่ต้องจัดหาเพิ่ม (${filterText})`],
                 ["อัปเดตข้อมูลล่าสุดเมื่อ:", new Date().toLocaleString('th-TH')],
-                [], // เว้นบรรทัด
+                [],
                 ["ลำดับ", "อำเภอ/ผู้จัดทำ", "ชื่อโครงการ", "รวมค่างานเดิม (บาท)", "รวมค่างานใหม่ (บาท)", "ส่วนเกินที่ต้องหาเพิ่ม (บาท)", "งบประมาณที่ได้รับจัดสรร (บาท)", "สถานะงบประมาณ (ผลต่าง)"]
             ];
             
@@ -1335,8 +1563,6 @@
             [...projectsToExport].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0)).forEach((proj, i) => {
                 let pOld=0, pNew=0;
                 (proj.rows||[]).forEach(r=>{ pOld+=parseFloat(r.oldCost||0); pNew+=parseFloat(r.newCost||0); });
-                
-                // แก้ไข: ใช้ window.unformatNumber ตอนส่งออก Excel ด้วยเช่นกัน
                 let pBudget = window.unformatNumber(proj.allocatedBudget);
                 
                 grandOld+=pOld; grandNew+=pNew; grandBudget+=pBudget;
@@ -1365,22 +1591,10 @@
                 grandBudgetStatus = gbDiff < 0 ? `เกินงบ ${window.formatNumber(Math.abs(gbDiff))}` : `เหลือ ${window.formatNumber(gbDiff)}`;
             }
             
-            // เพิ่มบรรทัดรวมยอด
             ws_data.push(["", "", "รวมทั้งสิ้น", grandOld, grandNew, grandNew-grandOld, grandBudget > 0 ? grandBudget : '-', grandBudgetStatus]);
             
             const ws = XLSX.utils.aoa_to_sheet(ws_data);
-
-            // ปรับความกว้างคอลัมน์ให้สวยงาม
-            ws['!cols'] = [
-                { wch: 8 },  // ลำดับ
-                { wch: 25 }, // อำเภอ
-                { wch: 50 }, // ชื่อโครงการ
-                { wch: 18 }, // เดิม
-                { wch: 18 }, // ใหม่
-                { wch: 18 }, // ส่วนเกิน
-                { wch: 18 }, // งบจัดสรร
-                { wch: 25 }  // สถานะ
-            ];
+            ws['!cols'] = [{ wch: 8 }, { wch: 25 }, { wch: 50 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 25 }];
 
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "สรุปภาพรวม");
@@ -1388,7 +1602,6 @@
         };
 
         window.downloadExcelTemplate = function() {
-            // ปรับปรุงแบบฟอร์มให้ดูเหมือนตาราง BOQ เพื่อให้ผู้ใช้เข้าใจและกรอกง่ายขึ้น
             const ws_data = [
                 ["ลำดับ", "รายการงานก่อสร้าง", "ค่างานต้นทุนเดิม (บาท)", "หมายเหตุ"],
                 [1, "หมวดงานดิน (Earth Work)", 1000000, "ระบุสาเหตุ (ถ้ามี)"],
@@ -1396,12 +1609,8 @@
                 [3, "หมวดงานผิวทางลาดยาง", 1500000, ""],
                 ["", "(เพิ่มรายการงานของท่านต่อจากบรรทัดนี้ได้เลย)", "", ""]
             ];
-            
             const ws = XLSX.utils.aoa_to_sheet(ws_data);
-            
-            // ปรับความกว้างคอลัมน์
             ws['!cols'] = [{ wch: 8 }, { wch: 50 }, { wch: 25 }, { wch: 30 }];
-            
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "แบบฟอร์มปริมาณงาน_BOQ");
             XLSX.writeFile(wb, "แบบฟอร์มนำเข้าข้อมูล_BOQ.xlsx");
@@ -1427,46 +1636,30 @@
                     }
 
                     window.showDialog("ต้องการล้างข้อมูลตารางปัจจุบัน และนำเข้ารายการจาก Excel ใช่หรือไม่?", true, (confirmed) => {
-                        if(!confirmed) {
-                            event.target.value = '';
-                            return;
-                        }
-
+                        if(!confirmed) { event.target.value = ''; return; }
                         const tbody = document.getElementById('tableBody');
                         tbody.innerHTML = '';
-
                         let rowCount = 0;
                         json.forEach(row => {
                             const keys = Object.keys(row);
-                            
-                            // รองรับหัวตารางหลายรูปแบบเพื่อความยืดหยุ่น
                             let taskName = row['รายการงานก่อสร้าง'] || row['รายการ'] || row['รายการ '] || '';
                             let oldCostRaw = row['ค่างานต้นทุนเดิม (บาท)'] || row['ราคาเดิม'] || row[' ราคาเดิม'] || '';
                             let remarkRaw = row['หมายเหตุ'] || '';
 
-                            // หากไม่พบหัวตารางตามชื่อที่ระบุ ให้ลองดึงข้อมูลจากตำแหน่งของคอลัมน์แทน
                             if (!taskName && keys.length >= 2) {
                                  if (keys[0] === 'ลำดับ' || keys[0].includes('ลำดับ')) {
-                                     taskName = row[keys[1]];
-                                     oldCostRaw = row[keys[2]];
-                                     remarkRaw = row[keys[3]] || '';
+                                     taskName = row[keys[1]]; oldCostRaw = row[keys[2]]; remarkRaw = row[keys[3]] || '';
                                  } else {
-                                     taskName = row[keys[0]];
-                                     oldCostRaw = row[keys[1]];
+                                     taskName = row[keys[0]]; oldCostRaw = row[keys[1]];
                                  }
                             }
-
                             const oldCost = String(oldCostRaw).replace(/[^0-9.-]+/g,"");
-
                             if (taskName && !String(taskName).includes("เพิ่มรายการงานของท่าน")) {
                                 window.addRow(taskName, oldCost, '', remarkRaw);
                                 rowCount++;
                             }
                         });
-                        
                         if (rowCount === 0) window.addRow(); 
-                        
-                        window.closeTemplateModal();
                         event.target.value = '';
                         window.calculateTotals();
                         window.showDialog(`นำเข้าข้อมูลจาก Excel สำเร็จจำนวน ${rowCount} รายการ`);
@@ -1479,7 +1672,6 @@
             reader.readAsArrayBuffer(file);
         };
 
-        // Offline Fallback for JSON
         window.saveToJson = function() {
             const data = { 
                 appType: "OBj_Cost_Breakdown", 
@@ -1514,6 +1706,900 @@
             e.target.value='';
         };
 
+        // =========================================================
+        // --- ระบบคำนวณค่า K (K-Value Logic) แบบเต็มสูตร 5 หมวดงาน ---
+        // =========================================================
+        
+        window.kFormulasDef = {
+            "1.1": { group: "หมวด 1: งานอาคาร", name: "1. งานอาคาร/องค์ประกอบ", formula: { const: 0.25, I: 0.15, C: 0.10, M: 0.40, S: 0.10 } },
+            "2.1": { group: "หมวด 2: งานดิน", name: "2.1 งานดิน (ขุด/ถม/บดอัด)", formula: { const: 0.30, I: 0.10, E: 0.40, F: 0.20 } },
+            "2.2": { group: "หมวด 2: งานดิน", name: "2.2 งานหินเรียง", formula: { const: 0.40, I: 0.20, M: 0.20, F: 0.20 } },
+            "2.3": { group: "หมวด 2: งานดิน", name: "2.3 งานเจาะระเบิดหิน", formula: { const: 0.45, I: 0.15, M: 0.10, E: 0.20, F: 0.10 } },
+            "3.1": { group: "หมวด 3: งานทาง", name: "3.1 ผิวทาง Prime/Tack/Seal", formula: { const: 0.30, A: 0.40, E: 0.20, F: 0.10 } },
+            "3.2": { group: "หมวด 3: งานทาง", name: "3.2 ผิวทาง Slurry Seal", formula: { const: 0.30, M: 0.10, A: 0.30, E: 0.20, F: 0.10 } },
+            "3.3": { group: "หมวด 3: งานทาง", name: "3.3 ผิวทาง Asphaltic/Macadam", formula: { const: 0.30, M: 0.10, A: 0.40, E: 0.10, F: 0.10 } },
+            "3.4": { group: "หมวด 3: งานทาง", name: "3.4 ผิวถนน คสล. (รวมคอสะพาน)", formula: { const: 0.30, I: 0.10, C: 0.35, M: 0.10, S: 0.15 } },
+            "3.5": { group: "หมวด 3: งานทาง", name: "3.5 ท่อระบายน้ำ คสล./บ่อพัก", formula: { const: 0.35, I: 0.20, C: 0.15, M: 0.15, S: 0.15 } },
+            "3.6": { group: "หมวด 3: งานทาง", name: "3.6 โครงสร้าง คสล./เขื่อน", formula: { const: 0.30, I: 0.10, C: 0.15, M: 0.20, S: 0.25 } },
+            "3.7": { group: "หมวด 3: งานทาง", name: "3.7 โครงสร้างเหล็ก", formula: { const: 0.25, I: 0.10, C: 0.05, M: 0.20, S: 0.40 } },
+            "4.1": { group: "หมวด 4: งานชลประทาน", name: "4.1 อาคารชลประทาน (ไม่มีบาน)", formula: { const: 0.40, I: 0.20, C: 0.10, M: 0.10, S: 0.20 } },
+            "4.2": { group: "หมวด 4: งานชลประทาน", name: "4.2 อาคารชลประทาน (มีบาน)", formula: { const: 0.35, I: 0.20, C: 0.10, M: 0.10, S: 0.25 } },
+            "4.3": { group: "หมวด 4: งานชลประทาน", name: "4.3 บานระบาย/Steel Liner", formula: { const: 0.35, I: 0.20, G: 0.45 } },
+            "4.4": { group: "หมวด 4: งานชลประทาน", name: "4.4 เหล็กเสริมคอนกรีต", formula: { const: 0.25, I: 0.15, S: 0.60 } },
+            "4.5": { group: "หมวด 4: งานชลประทาน", name: "4.5 คอนกรีต (ไม่รวมเหล็ก)/ดาดคลอง", formula: { const: 0.40, I: 0.15, C: 0.25, M: 0.20 } },
+            "4.6": { group: "หมวด 4: งานชลประทาน", name: "4.6 งานเจาะ", formula: { const: 0.40, I: 0.20, M: 0.10, E: 0.20, F: 0.10 } },
+            "5.1": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.1.1 ท่อ AC/PVC (ผู้ว่าจ้างหา)", formula: { const: 0.50, I: 0.25, M: 0.25 } },
+            "5.2": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.1.2 ท่อ AC (ผู้รับจ้างหา)", formula: { const: 0.40, I: 0.10, M: 0.10, AC: 0.40 } },
+            "5.3": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.1.3 ท่อ PVC (ผู้รับจ้างหา)", formula: { const: 0.40, I: 0.10, M: 0.10, PVC: 0.40 } },
+            "5.4": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.2.1 ท่อเหล็ก/HDPE (ผู้ว่าจ้างหา)", formula: { const: 0.40, I: 0.10, M: 0.15, E: 0.20, F: 0.15 } },
+            "5.5": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.2.2 ท่อเหล็กเหนียว (ผู้รับจ้างหา)", formula: { const: 0.40, I: 0.10, M: 0.10, E: 0.10, GIP: 0.30 } },
+            "5.6": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.2.3 ท่อ HDPE (ผู้รับจ้างหา)", formula: { const: 0.50, I: 0.10, M: 0.10, PE: 0.30 } },
+            "5.7": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.3 งานปรับปรุงอุโมงค์ส่งน้ำ", formula: { const: 0.40, I: 0.10, E: 0.15, GIP: 0.35 } },
+            "5.8": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.4 ท่อ PVC หุ้มด้วยคอนกรีต", formula: { const: 0.30, I: 0.10, C: 0.20, M: 0.05, S: 0.05, PVC: 0.30 } },
+            "5.9": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.5 ท่อ PVC กลบทราย", formula: { const: 0.25, I: 0.05, M: 0.05, PVC: 0.65 } },
+            "5.10": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.6 ท่อเหล็กอาบสังกะสี", formula: { const: 0.25, I: 0.25, GIP: 0.50 } },
+            "5.11": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.7.1 สายส่งแรงสูงและสถานีย่อย", formula: { const: 0.60, I: 0.25, F: 0.15 } },
+            "5.12": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.7.2 ฐานรากเสาไฟฟ้า", formula: { const: 0.35, I: 0.20, C: 0.30, S: 0.10, F: 0.15 } },
+            "5.13": { group: "หมวด 5: สาธารณูปโภค (ประปา/ไฟฟ้า)", name: "5.8.1 เสาเข็มคอนกรีตอัดแรง", formula: { const: 0.35, I: 0.15, C: 0.20, S: 0.30 } }
+        };
+
+        // ปรับชื่อและเรียงลำดับใหม่ให้ตรงกับแบบฟอร์มของ สนค. (กระทรวงพาณิชย์)
+        window.kIndexLabels = {
+            M: { name: "ดัชนีราคาวัสดุก่อสร้าง (M)", color: "text-indigo-700" },
+            A: { name: "ดัชนีราคาแอสฟัลท์ (A)", color: "text-neutral-900" },
+            S: { name: "ดัชนีราคาเหล็ก (S)", color: "text-slate-800" },
+            E: { name: "ดัชนีราคาเครื่องจักรกลฯ (E)", color: "text-amber-700" },
+            C: { name: "ดัชนีราคาซีเมนต์ (C)", color: "text-gray-600" },
+            GIP: { name: "ดัชนีราคาท่อเหล็กอาบสังกะสี (GIP)", color: "text-zinc-600" },
+            G: { name: "ดัชนีราคาเหล็กแผ่นเรียบ (G)", color: "text-slate-600" },
+            AC: { name: "ดัชนีราคาท่อซีเมนต์ใยหิน (AC)", color: "text-cyan-700" },
+            I: { name: "ดัชนีราคาผู้บริโภค (I)", color: "text-blue-700" },
+            PVC: { name: "ดัชนีราคาท่อ PVC (PVC)", color: "text-sky-600" },
+            F: { name: "ดัชนีราคาน้ำมันดีเซล (F)", color: "text-red-600" },
+            W: { name: "ดัชนีราคาสายไฟฟ้า (W)", color: "text-yellow-600" },
+            PE: { name: "ดัชนีราคาท่อ HDPE (PE)", color: "text-blue-800" }
+        };
+
+        window.kIndexOrder = ['M', 'A', 'S', 'E', 'C', 'GIP', 'G', 'AC', 'I', 'PVC', 'F', 'W', 'PE'];
+
+        // ลบข้อมูลจำลองทั้งหมด
+        window.defaultKDatabase = {};
+
+        window.formatThaiMonth = function(yyyy_mm) {
+            if (!yyyy_mm) return "-";
+            const parts = yyyy_mm.split('-');
+            if (parts.length !== 2) return yyyy_mm;
+            const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            const monthIndex = parseInt(parts[1], 10) - 1;
+            const thaiYear = parseInt(parts[0], 10) + 543;
+            return `${thaiMonths[monthIndex]} ${(thaiYear).toString().substring(2)}`;
+        };
+
+        // ดึงข้อมูลจาก Cloud เท่านั้น
+        window.getKDatabaseEntry = function(yyyy_mm) {
+            if (!yyyy_mm) return null;
+            if (window.cloudKIndices && window.cloudKIndices[yyyy_mm]) {
+                return { source: 'cloud', data: window.cloudKIndices[yyyy_mm] };
+            }
+            return null; // ไม่มีข้อมูลในระบบ
+        };
+
+        // 🌟 ปุ่มบันทึกการคำนวณค่า K ลงใน Cloud ของโปรเจกต์
+        window.saveKValueData = function() {
+            // สั่งให้ดึงฟังก์ชันเซฟโปรเจกต์เดิมมาใช้ (แบบไม่แจ้งเตือนซ้ำซ้อน)
+            window.saveProjectToCloud(true);
+            window.showDialog("✅ บันทึกข้อมูลการคำนวณค่า K และสูตรที่ท่านเลือก ลงในโปรเจกต์เรียบร้อยแล้วครับ!<br><br><span class='text-sm text-gray-500'>ข้อมูลเหล่านี้จะถูกโหลดกลับมาโดยอัตโนมัติเมื่อเปิดโปรเจกต์นี้ในครั้งหน้า</span>");
+        };
+
+        // 🌟 ปุ่มสั่งปริ้นท์รายงานค่า K
+        window.printKValueReport = function() {
+            document.body.classList.add('print-k-value');
+            window.print();
+            setTimeout(() => {
+                document.body.classList.remove('print-k-value');
+            }, 500);
+        };
+
+        // ==========================================
+        // UI สำหรับหน้าต่าง ค่า K หลัก (อัปเดตระบบป้อนค่าอิสระ)
+        // ==========================================
+        
+        window.renderKValueItems = function(items) {
+            const itemsList = document.getElementById('kEligibleItemsList');
+            itemsList.innerHTML = '';
+            
+            if (!items || items.length === 0) {
+                itemsList.innerHTML = '<tr class="empty-msg"><td colspan="5" class="text-red-500 italic text-center p-4 text-sm">ยังไม่มีรายการงานก่อสร้าง กรุณากด "เพิ่มรายการ" หรือ "ดึงข้อมูลจากตารางหลัก"</td></tr>';
+                window.updateKIndices();
+                return;
+            }
+            
+            items.forEach((item) => {
+                window.addKValueRow(item.name, item.cost, item.formula, false);
+            });
+            window.updateKIndices();
+        };
+
+        window.addKValueRow = function(name = '', cost = 0, formula = '', update = true) {
+            const itemsList = document.getElementById('kEligibleItemsList');
+            const emptyMsg = itemsList.querySelector('.empty-msg');
+            if (emptyMsg) emptyMsg.remove();
+
+            let formulaOptionsHtml = '<option value="">-- เลือกสูตรอ้างอิง --</option>';
+            let currentGroup = "";
+            for (const [key, val] of Object.entries(window.kFormulasDef)) {
+                if (val.group !== currentGroup) {
+                    if (currentGroup !== "") formulaOptionsHtml += '</optgroup>';
+                    formulaOptionsHtml += `<optgroup label="${val.group}">`;
+                    currentGroup = val.group;
+                }
+                formulaOptionsHtml += `<option value="${key}">${val.name}</option>`;
+            }
+            formulaOptionsHtml += '</optgroup>';
+
+            let customizedOptionsHtml = formulaOptionsHtml.replace(`value="${formula}"`, `value="${formula}" selected`);
+
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-orange-50 transition k-item-row';
+            row.innerHTML = `
+                <td class="p-2 border-b border-r border-gray-200 text-center text-gray-500 k-item-index"></td>
+                <td class="p-2 border-b border-r border-gray-200">
+                    <input type="text" class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:border-orange-500 k-item-name" value="${name}" placeholder="ระบุรายการก่อสร้าง..." onchange="window.updateKIndices()">
+                </td>
+                <td class="p-2 border-b border-r border-gray-200">
+                    <input type="text" class="w-full border border-gray-300 rounded px-2 py-1 text-right text-red-600 font-bold text-sm focus:border-orange-500 k-row-cost" value="${window.formatNumber(cost)}" placeholder="0.00" onfocus="window.handleKFocus(this)" onblur="window.handleKBlur(this); window.updateKIndices()">
+                </td>
+                <td class="p-2 border-b border-r border-gray-200 text-center align-middle">
+                    <select class="w-full border border-gray-300 rounded px-1 py-1 text-[0.7rem] bg-white focus:border-orange-500 cursor-pointer shadow-sm k-item-formula" onchange="window.updateKIndices()">
+                        ${customizedOptionsHtml}
+                    </select>
+                </td>
+                <td class="p-2 border-b text-center align-middle no-print">
+                    <button onclick="window.removeKValueRow(this)" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                </td>
+            `;
+            itemsList.appendChild(row);
+            window.updateKItemIndices();
+            if (update) window.updateKIndices();
+        };
+
+        window.removeKValueRow = function(btn) {
+            btn.closest('tr').remove();
+            const itemsList = document.getElementById('kEligibleItemsList');
+            if (itemsList.children.length === 0) {
+                itemsList.innerHTML = '<tr class="empty-msg"><td colspan="5" class="text-red-500 italic text-center p-4 text-sm">ยังไม่มีรายการงานก่อสร้าง กรุณากด "เพิ่มรายการ" หรือ "ดึงข้อมูลจากตารางหลัก"</td></tr>';
+            } else {
+                window.updateKItemIndices();
+            }
+            window.updateKIndices();
+        };
+
+        window.updateKItemIndices = function() {
+            document.querySelectorAll('#kEligibleItemsList tr.k-item-row').forEach((row, index) => {
+                const indexTd = row.querySelector('.k-item-index');
+                if (indexTd) indexTd.innerText = index + 1;
+            });
+        };
+
+        window.syncFromMainTable = function() {
+            window.showDialog("ระบบจะดึงข้อมูลรายการและค่างานใหม่จากตารางหลักมาทับข้อมูลปัจจุบัน ต้องการดำเนินการต่อหรือไม่?", true, (confirmed) => {
+                if (!confirmed) return;
+                
+                const items = [];
+                document.querySelectorAll('#tableBody tr').forEach((tr, index) => {
+                    const taskNameInput = tr.querySelector('td:nth-child(1) input');
+                    const newCostInput = tr.querySelector('.new-cost');
+                    
+                    if (taskNameInput && taskNameInput.value.trim() !== '') {
+                        // ดึงสูตรเดิมที่เคยเลือกไว้ ถ้ามี
+                        const formula = (window.savedKValueItems && window.savedKValueItems[index]) ? window.savedKValueItems[index].formula : '';
+                        items.push({
+                            name: taskNameInput.value.trim(),
+                            cost: window.unformatNumber(newCostInput.value),
+                            formula: formula
+                        });
+                    }
+                });
+                
+                window.renderKValueItems(items);
+            });
+        };
+
+        window.handleKFocus = function(inputEl) {
+            let val = window.unformatNumber(inputEl.value);
+            inputEl.value = val === 0 ? '' : val;
+            inputEl.select();
+        };
+
+        window.handleKBlur = function(inputEl) {
+            inputEl.value = window.formatNumber(window.unformatNumber(inputEl.value));
+        };
+
+        window.openKValueModal = function() {
+            document.getElementById('kValueModal').classList.remove('hidden');
+            
+            const projName = document.getElementById('projectName').value.trim();
+            document.getElementById('kProjectNameDisplay').innerText = projName || '- ไม่ได้ระบุชื่อโครงการ -';
+
+            const itemsList = document.getElementById('kEligibleItemsList');
+            
+            // โหลดข้อมูลก็ต่อเมื่อตารางยังว่างอยู่ (เปิดครั้งแรก หรือ โหลดโปรเจกต์ใหม่)
+            if (itemsList.children.length === 0 || itemsList.querySelector('.empty-msg')) {
+                if (window.savedKValueItems && window.savedKValueItems.length > 0) {
+                    window.renderKValueItems(window.savedKValueItems);
+                } else {
+                    // ถ้าไม่มีข้อมูลเก่า ให้ดึงจากตารางหลักอัตโนมัติ
+                    const items = [];
+                    document.querySelectorAll('#tableBody tr').forEach((tr) => {
+                        const taskNameInput = tr.querySelector('td:nth-child(1) input');
+                        const newCostInput = tr.querySelector('.new-cost');
+                        if (taskNameInput && taskNameInput.value.trim() !== '') {
+                            items.push({
+                                name: taskNameInput.value.trim(),
+                                cost: window.unformatNumber(newCostInput.value),
+                                formula: ''
+                            });
+                        }
+                    });
+                    window.renderKValueItems(items);
+                }
+            } else {
+                window.updateKIndices();
+            }
+
+            window.check90Days();
+        };
+
+        window.check90Days = function() {
+            const installment = document.getElementById('kInstallment').value;
+            const deliveryDateStr = document.getElementById('kDeliveryDate').value;
+            const statusBox = document.getElementById('k90DaysStatusBox');
+
+            if (installment !== 'last') {
+                statusBox.classList.add('hidden');
+                return;
+            }
+
+            statusBox.classList.remove('hidden');
+
+            if (!deliveryDateStr) {
+                statusBox.className = "mt-2 p-2 rounded text-center text-sm font-bold border bg-gray-100 text-gray-500 border-gray-300";
+                statusBox.innerText = "กรุณาระบุวันที่ส่งมอบงาน เพื่อตรวจสอบสิทธิ์ 90 วัน";
+                return;
+            }
+
+            const deliveryDate = new Date(deliveryDateStr);
+            deliveryDate.setHours(0,0,0,0);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            const diffTime = today.getTime() - deliveryDate.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) {
+                statusBox.className = "mt-2 p-2 rounded text-center text-sm font-bold border bg-blue-50 text-blue-700 border-blue-300";
+                statusBox.innerText = `ยังไม่ถึงวันส่งมอบ (ล่วงหน้า ${Math.abs(diffDays)} วัน)`;
+            } else if (diffDays <= 90) {
+                statusBox.className = "mt-2 p-2 rounded text-center text-sm font-bold border bg-green-50 text-green-700 border-green-300";
+                statusBox.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> อยู่ในระยะเวลา 90 วัน (ผ่านมาแล้ว ${diffDays} วัน)`;
+            } else {
+                statusBox.className = "mt-2 p-2 rounded text-center text-sm font-bold border bg-red-50 text-red-700 border-red-300";
+                statusBox.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1"></i> เกินกำหนด 90 วัน (พ้นสิทธิ์ขอรับชดเชย)`;
+            }
+        };
+
+        window.closeKValueModal = function() {
+            document.getElementById('kValueModal').classList.add('hidden');
+        };
+
+        window.updateKIndices = function() {
+            const base = document.getElementById('kBaseMonth').value;
+            const target = document.getElementById('kTargetMonth').value;
+            
+            document.getElementById('kDisplayBaseMonth').innerText = window.formatThaiMonth(base);
+            document.getElementById('kDisplayTargetMonth').innerText = window.formatThaiMonth(target);
+            
+            const dbBaseObj = window.getKDatabaseEntry(base);
+            const dbTargetObj = window.getKDatabaseEntry(target);
+            const statusBadge = document.getElementById('kDbStatusBadge');
+
+            if (!dbBaseObj || !dbTargetObj) {
+                statusBadge.innerText = "❌ ไม่มีข้อมูลดัชนีในเดือนที่เลือก";
+                statusBadge.className = "text-[0.65rem] font-bold px-2 py-1 rounded bg-red-100 text-red-600";
+                document.getElementById('kIndicesTableBody').innerHTML = `<tr><td colspan="4" class="p-4 text-red-500 italic font-semibold">ไม่พบข้อมูลดัชนีของเดือนฐาน หรือ เดือนส่งงาน<br><span class="text-sm font-normal text-gray-500">กรุณากดปุ่ม "ฐานข้อมูลดัชนี" ด้านบนเพื่อนำเข้าข้อมูลของกระทรวงพาณิชย์ก่อนครับ</span></td></tr>`;
+                window.clearKCalculation();
+                return;
+            }
+
+            const dbBase = dbBaseObj.data;
+            const dbTarget = dbTargetObj.data;
+
+            statusBadge.innerText = "✔️ ดึงข้อมูลจาก Cloud อัปเดตล่าสุด";
+            statusBadge.className = "text-[0.65rem] font-bold px-2 py-1 rounded bg-green-100 text-green-700";
+
+            let requiredIndices = new Set();
+            document.querySelectorAll('#kEligibleItemsList tr.k-item-row').forEach(row => {
+                const select = row.querySelector('.k-item-formula');
+                if(select && select.value && window.kFormulasDef[select.value]) {
+                    const formula = window.kFormulasDef[select.value].formula;
+                    Object.keys(formula).forEach(k => {
+                        if(k !== 'const') requiredIndices.add(k);
+                    });
+                }
+            });
+
+            if(requiredIndices.size === 0) {
+                requiredIndices = new Set(['I', 'M', 'F']); // Default ถ้ายังไม่เลือกสูตร
+            }
+
+            const tbody = document.getElementById('kIndicesTableBody');
+            tbody.innerHTML = '';
+            
+            // เรียงดัชนีให้ตรงกับกระดาษเพื่อให้ดูง่าย
+            const sortedIndices = Array.from(requiredIndices).sort((a, b) => window.kIndexOrder.indexOf(a) - window.kIndexOrder.indexOf(b));
+
+            sortedIndices.forEach(indexKey => {
+                const labelDef = window.kIndexLabels[indexKey];
+                if(labelDef && dbBase[indexKey] && dbTarget[indexKey]) {
+                    const ratio = (dbTarget[indexKey] / dbBase[indexKey]).toFixed(4);
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="p-1.5 font-medium border border-gray-300 ${labelDef.color}">${labelDef.name}</td>
+                            <td class="p-1.5 bg-blue-50/50 border border-gray-300">${Number(dbBase[indexKey]).toFixed(2)}</td>
+                            <td class="p-1.5 bg-purple-50/50 border border-gray-300">${Number(dbTarget[indexKey]).toFixed(2)}</td>
+                            <td class="p-1.5 text-indigo-600 font-semibold border border-gray-300">${ratio}</td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            window.calculateK(dbBase, dbTarget);
+        };
+
+        window.clearKCalculation = function() {
+            document.getElementById('kCalculationResultsBody').innerHTML = '<tr><td colspan="6" class="p-4 border border-gray-300 text-gray-500 italic">รอข้อมูลดัชนีเพื่อคำนวณ...</td></tr>';
+            
+            // อัปเดตการล้างค่า UI ใหม่
+            document.getElementById('summaryContainerCard').className = "bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-gray-500 transition-colors duration-300";
+            document.getElementById('summaryIcon').className = "fa-solid fa-file-invoice-dollar mr-2 text-gray-300";
+            document.getElementById('kTotalCalculatedWork').innerHTML = `0.00 <span class="text-sm font-normal text-gray-400">บาท</span>`;
+            document.getElementById('kTotalItemsMatched').innerText = "0";
+            document.getElementById('kCompensation').innerHTML = `0.00 <span class="text-xl font-bold">บาท</span>`;
+            document.getElementById('kCompensation').className = "text-4xl md:text-5xl font-black thai-number my-3 tracking-tight text-gray-400 transition-colors duration-300";
+            
+            const badge = document.getElementById('kActionBadge');
+            badge.innerText = "- รอข้อมูลดัชนีเพื่อคำนวณ -";
+            badge.className = "mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold border border-gray-300 bg-gray-100 text-gray-600 transition-all duration-300";
+            
+            document.getElementById('kActionDesc').innerText = "ไม่สามารถคำนวณได้เนื่องจากขาดข้อมูลดัชนีอ้างอิง";
+            document.getElementById('kActionDesc').className = "text-xs mt-3 leading-relaxed font-medium text-red-500";
+
+            // ซ่อนการวิเคราะห์
+            document.getElementById('economicAnalysisCard').classList.add('hidden');
+        };
+
+        window.calculateK = function(dbBase, dbTarget) {
+            let totalCompensation = 0;
+            let kValuesFound = [];
+            let formulasUsedCount = 0;
+            let totalCalculatedWorkValue = 0;
+
+            const resultsBody = document.getElementById('kCalculationResultsBody');
+            resultsBody.innerHTML = '';
+            let hasItem = false;
+
+            document.querySelectorAll('#kEligibleItemsList tr.k-item-row').forEach((row, index) => {
+                const taskNameEl = row.querySelector('.k-item-name');
+                const taskName = taskNameEl ? taskNameEl.value.trim() : '';
+                const select = row.querySelector('.k-item-formula');
+                const costStrEl = row.querySelector('.k-row-cost');
+                const costStr = costStrEl ? costStrEl.value : '0';
+                const workValue = window.unformatNumber(costStr);
+
+                let kValDisplay = '-';
+                let diffDisplay = '-';
+                let compDisplay = '-';
+                let compColor = 'text-gray-500';
+
+                if (taskName) {
+                    hasItem = true;
+
+                    if (select && select.value && window.kFormulasDef[select.value]) {
+                        formulasUsedCount++;
+                        const formulaDef = window.kFormulasDef[select.value].formula;
+
+                        if (workValue > 0) {
+                            totalCalculatedWorkValue += workValue;
+                            let kVal = formulaDef.const || 0;
+                            
+                            Object.keys(formulaDef).forEach(key => {
+                                if (key !== 'const' && dbBase[key] && dbTarget[key]) {
+                                    kVal += formulaDef[key] * (dbTarget[key] / dbBase[key]);
+                                }
+                            });
+
+                            kVal = Math.round(kVal * 1000) / 1000;
+                            kValuesFound.push(kVal);
+                            kValDisplay = kVal.toFixed(3);
+
+                            const diffPercent = (kVal - 1) * 100;
+                            if (diffPercent > 0) {
+                                diffDisplay = `<span class="text-emerald-600">+${diffPercent.toFixed(2)}%</span>`;
+                            } else if (diffPercent < 0) {
+                                diffDisplay = `<span class="text-red-600">${diffPercent.toFixed(2)}%</span>`;
+                            } else {
+                                diffDisplay = `<span class="text-gray-500">0.00%</span>`;
+                            }
+
+                            let itemComp = 0;
+                            if (kVal > 1.04) {
+                                itemComp = workValue * (kVal - 1.04);
+                                totalCompensation += itemComp;
+                                compDisplay = `+${window.formatNumber(itemComp)}`;
+                                compColor = 'text-emerald-600 font-bold';
+                            } else if (kVal < 0.96) {
+                                itemComp = workValue * (0.96 - kVal);
+                                totalCompensation -= itemComp; // เก็บเป็นลบ
+                                compDisplay = `-${window.formatNumber(itemComp)}`;
+                                compColor = 'text-red-600 font-bold';
+                            } else {
+                                compDisplay = '0.00';
+                            }
+                        }
+                    } else if (workValue > 0) {
+                        kValDisplay = '<span class="text-red-600 font-bold">ไม่อยู่ในรายการตามสูตร</span>';
+                        diffDisplay = '<span class="text-gray-400">-</span>';
+                        compDisplay = '<span class="text-gray-400">-</span>';
+                    }
+
+                    resultsBody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="p-2 border border-gray-300 text-center text-gray-500">${index + 1}</td>
+                            <td class="p-2 border border-gray-300 text-left truncate max-w-[150px]" title="${taskName}">${taskName}</td>
+                            <td class="p-2 border border-gray-300 text-right text-gray-600">${window.formatNumber(workValue)}</td>
+                            <td class="p-2 border border-gray-300 font-semibold text-gray-800">${kValDisplay}</td>
+                            <td class="p-2 border border-gray-300">${diffDisplay}</td>
+                            <td class="p-2 border border-gray-300 text-right ${compColor}">${compDisplay}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            if (!hasItem) {
+                resultsBody.innerHTML = '<tr><td colspan="6" class="p-4 border border-gray-300 text-gray-500 italic">ไม่มีรายการก่อสร้าง</td></tr>';
+            }
+
+            // 🌟 อัปเดต UI สรุปผลแบบใหม่ 🌟
+            document.getElementById('kTotalCalculatedWork').innerHTML = `${window.formatNumber(totalCalculatedWorkValue)} <span class="text-sm font-normal text-gray-400">บาท</span>`;
+            document.getElementById('kTotalItemsMatched').innerText = formulasUsedCount;
+
+            const compEl = document.getElementById('kCompensation');
+            const badgeEl = document.getElementById('kActionBadge');
+            const descEl = document.getElementById('kActionDesc');
+            const cardEl = document.getElementById('summaryContainerCard');
+            const iconEl = document.getElementById('summaryIcon');
+
+            if (formulasUsedCount === 0) {
+                compEl.innerHTML = `0.00 <span class="text-xl font-bold">บาท</span>`;
+                compEl.className = "text-4xl md:text-5xl font-black thai-number my-3 tracking-tight text-gray-400 transition-colors duration-300";
+                badgeEl.innerText = "- รอการเลือกสูตรคำนวณ -";
+                badgeEl.className = "mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold border border-gray-300 bg-gray-100 text-gray-600 transition-all duration-300";
+                descEl.innerText = "กรุณาเลือก 'สูตรค่า K อ้างอิง' ในตารางด้านบนให้ตรงกับหมวดงาน";
+                descEl.className = "text-xs mt-3 leading-relaxed font-medium text-gray-500";
+                cardEl.className = "bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-gray-500 transition-colors duration-300";
+                iconEl.className = "fa-solid fa-file-invoice-dollar mr-2 text-gray-300";
+            } else if (totalCompensation > 0) {
+                compEl.innerHTML = `+${window.formatNumber(totalCompensation)} <span class="text-xl font-bold text-emerald-700">บาท</span>`;
+                compEl.className = "text-4xl md:text-5xl font-black thai-number my-3 tracking-tight text-emerald-600 transition-colors duration-300 drop-shadow-sm";
+                badgeEl.innerHTML = `<i class="fa-solid fa-hand-holding-dollar mr-1"></i> ผู้รับจ้างมีสิทธิ์ขอรับเงินชดเชย`;
+                badgeEl.className = "mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold border border-emerald-300 bg-emerald-100 text-emerald-800 transition-all duration-300";
+                descEl.innerHTML = "ตามสัญญา รัฐต้องจ่ายเงินชดเชยเพิ่มให้แก่ผู้รับจ้าง<br>หน่วยงานสามารถนำยอดนี้ไปตั้งฎีกาเบิกจ่ายเพิ่มเติมได้";
+                descEl.className = "text-xs mt-3 leading-relaxed font-medium text-emerald-700";
+                cardEl.className = "bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-emerald-500 transition-colors duration-300";
+                iconEl.className = "fa-solid fa-circle-check mr-2 text-emerald-400";
+            } else if (totalCompensation < 0) {
+                compEl.innerHTML = `-${window.formatNumber(Math.abs(totalCompensation))} <span class="text-xl font-bold text-red-700">บาท</span>`;
+                compEl.className = "text-4xl md:text-5xl font-black thai-number my-3 tracking-tight text-red-600 transition-colors duration-300 drop-shadow-sm";
+                badgeEl.innerHTML = `<i class="fa-solid fa-money-bill-transfer mr-1"></i> รัฐต้องเรียกเงินค่างานคืน`;
+                badgeEl.className = "mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold border border-red-300 bg-red-100 text-red-800 transition-all duration-300";
+                descEl.innerHTML = "ตามสัญญา หน่วยงานต้องหักเงินค่างานจากผู้รับจ้าง<br>เพื่อนำส่งคืนเป็นรายได้แผ่นดินตามระเบียบ";
+                descEl.className = "text-xs mt-3 leading-relaxed font-medium text-red-700";
+                cardEl.className = "bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-red-500 transition-colors duration-300";
+                iconEl.className = "fa-solid fa-triangle-exclamation mr-2 text-red-400";
+            } else {
+                compEl.innerHTML = `0.00 <span class="text-xl font-bold text-gray-500">บาท</span>`;
+                compEl.className = "text-4xl md:text-5xl font-black thai-number my-3 tracking-tight text-gray-800 transition-colors duration-300";
+                badgeEl.innerHTML = `<i class="fa-solid fa-scale-balanced mr-1"></i> อยู่ในเกณฑ์รับความเสี่ยง 4% (ไม่ชดเชย)`;
+                badgeEl.className = "mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold border border-gray-300 bg-gray-100 text-gray-800 transition-all duration-300";
+                descEl.innerHTML = "การเปลี่ยนแปลงของดัชนีเมื่อคำนวณแล้ว ผันผวนไม่เกินร้อยละ 4<br>จึงไม่มีการจ่ายเงินชดเชยหรือเรียกเงินคืนตามระเบียบฯ";
+                descEl.className = "text-xs mt-3 leading-relaxed font-medium text-gray-600";
+                cardEl.className = "bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-gray-400 transition-colors duration-300";
+                iconEl.className = "fa-solid fa-minus mr-2 text-gray-400";
+            }
+
+            // 🌟 ฟังก์ชันวิเคราะห์ทางเศรษฐศาสตร์ (Economic Analysis) 🌟
+            const ecoCard = document.getElementById('economicAnalysisCard');
+            const actualCostDiff = window.globalNetCostDiff || 0; 
+            
+            if (formulasUsedCount > 0 && actualCostDiff !== 0) {
+                ecoCard.classList.remove('hidden');
+                
+                document.getElementById('ecoActualCostDiff').innerText = `${actualCostDiff > 0 ? '+' : ''}${window.formatNumber(actualCostDiff)} บาท`;
+                document.getElementById('ecoKCompensation').innerText = `${totalCompensation > 0 ? '+' : ''}${window.formatNumber(totalCompensation)} บาท`;
+
+                const gapValue = actualCostDiff - totalCompensation;
+                document.getElementById('ecoGapValue').innerText = `${window.formatNumber(Math.abs(gapValue))} บาท`;
+                
+                const conclusionEl = document.getElementById('ecoConclusionText');
+                
+                if (actualCostDiff > 0) {
+                    if (gapValue > 0) {
+                        conclusionEl.innerHTML = `<i class="fa-solid fa-check-double text-green-600"></i> <b>รัฐประหยัดงบประมาณ:</b> สูตรค่า K อนุมัติเงินชดเชยน้อยกว่าต้นทุนตลาดที่เพิ่มขึ้นจริง ภาระส่วนต่าง ${window.formatNumber(gapValue)} บาท ผู้รับจ้างเป็นผู้รับความเสี่ยง <br><span class="text-xs text-gray-600 font-normal">*(สรุป: การใช้สัญญาค่า K คุ้มค่ากว่าการยกเลิกประมูลแล้วคำนวณราคากลางใหม่)*</span>`;
+                        conclusionEl.className = "text-sm font-semibold mt-3 text-indigo-800";
+                    } else if (gapValue < 0) {
+                        conclusionEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-orange-500"></i> <b>รัฐจ่ายชดเชยเกินต้นทุนจริง:</b> สูตรค่า K ชดเชยให้มากกว่าต้นทุนที่พุ่งขึ้นจริง ${window.formatNumber(Math.abs(gapValue))} บาท <br><span class="text-xs text-gray-600 font-normal">*(สรุป: สูตรเอื้อประโยชน์ต่อผู้รับจ้างในกรณีนี้ ควรตรวจสอบดัชนีวัสดุอื่นๆ ประกอบ)*</span>`;
+                        conclusionEl.className = "text-sm font-semibold mt-3 text-orange-800";
+                    } else {
+                        conclusionEl.innerHTML = `<i class="fa-solid fa-equals text-blue-500"></i> <b>ชดเชยสมดุล:</b> เงินชดเชยครอบคลุมต้นทุนที่เพิ่มขึ้นพอดี`;
+                        conclusionEl.className = "text-sm font-semibold mt-3 text-blue-800";
+                    }
+                } else if (actualCostDiff < 0) {
+                    if (totalCompensation < 0) { 
+                        conclusionEl.innerHTML = `<i class="fa-solid fa-hand-holding-dollar text-green-600"></i> <b>รัฐได้ผลประโยชน์:</b> สามารถเรียกคืนค่างานได้ ${window.formatNumber(Math.abs(totalCompensation))} บาท ลดผลกระทบจากราคาน้ำมันที่ร่วงลง`;
+                        conclusionEl.className = "text-sm font-semibold mt-3 text-green-800";
+                    } else {
+                        conclusionEl.innerHTML = `<i class="fa-solid fa-circle-info text-gray-500"></i> ต้นทุนจริงลดลง แต่ค่า K ไม่ถึงเกณฑ์ให้เรียกเงินคืน (อยู่ในช่วงรับความเสี่ยง 4%)`;
+                        conclusionEl.className = "text-sm font-semibold mt-3 text-gray-800";
+                    }
+                } else {
+                    conclusionEl.innerHTML = `- ไม่มีการเปลี่ยนแปลงอย่างมีนัยสำคัญ -`;
+                    conclusionEl.className = "text-sm font-semibold mt-3 text-gray-500";
+                }
+
+                // 🌟 เรียกใช้อัปเดตกราฟเส้นวิเคราะห์เศรษฐศาสตร์ 🌟
+                window.updateEcoChart(
+                    window.formatThaiMonth(document.getElementById('kBaseMonth').value),
+                    window.formatThaiMonth(document.getElementById('kTargetMonth').value),
+                    actualCostDiff,
+                    totalCompensation
+                );
+
+            } else {
+                ecoCard.classList.add('hidden');
+            }
+        };
+
+        // 🌟 ฟังก์ชันวาดกราฟเส้นวิเคราะห์เศรษฐศาสตร์ (Economic Analysis Chart) 🌟
+        window.updateEcoChart = function(baseMonthStr, targetMonthStr, actualDiff, kComp) {
+            const ctx = document.getElementById('ecoChart');
+            if (!ctx) return;
+            
+            if (window.ecoChart) window.ecoChart.destroy();
+            
+            window.ecoChart = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: [baseMonthStr + " (เดือนเปิดซอง)", targetMonthStr + " (เดือนส่งงาน)"],
+                    datasets: [
+                        {
+                            label: 'ต้นทุนที่เพิ่มขึ้นจริง (Actual Cost)',
+                            data: [0, actualDiff],
+                            borderColor: 'rgb(234, 88, 12)', // Orange 600
+                            backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            fill: true,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'เงินชดเชยค่า K (K-Compensation)',
+                            data: [0, kComp],
+                            borderColor: 'rgb(5, 150, 105)', // Emerald 600
+                            backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            fill: true,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { font: { family: "'Sarabun', sans-serif", size: 12 } }
+                        },
+                        tooltip: {
+                            titleFont: { family: "'Sarabun', sans-serif" },
+                            bodyFont: { family: "'Sarabun', sans-serif" },
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed.y !== null) {
+                                        label += window.formatNumber(context.parsed.y) + ' บาท';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: { family: "'Sarabun', sans-serif" },
+                                callback: function(value) {
+                                    return value >= 1000000 ? (value/1000000).toFixed(1)+'M' : (value>=1000 ? (value/1000).toFixed(0)+'k' : value);
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: { font: { family: "'Sarabun', sans-serif" } }
+                        }
+                    }
+                }
+            });
+        };
+
+        // ==========================================
+        // UI สำหรับ Admin ฐานข้อมูลดัชนี K (Cloud DB)
+        // ==========================================
+        window.openKIndexAdminModal = function() {
+            document.getElementById('kIndexAdminModal').classList.remove('hidden');
+            
+            // สร้างช่องกรอกข้อมูลตามลำดับที่ถูกต้องเป๊ะๆ (window.kIndexOrder)
+            const container = document.getElementById('adminIndexFields');
+            container.innerHTML = '';
+            for (const key of window.kIndexOrder) {
+                const labelDef = window.kIndexLabels[key];
+                container.innerHTML += `
+                    <div class="bg-gray-50 p-2 rounded border border-gray-200 shadow-sm hover:border-indigo-300 transition">
+                        <label class="block text-[0.7rem] font-bold ${labelDef.color} mb-1 truncate" title="${labelDef.name}">${labelDef.name}</label>
+                        <input type="number" step="0.01" id="adminIdx_${key}" class="w-full border border-gray-300 rounded px-2 py-1 text-sm font-bold text-gray-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200" placeholder="0.00">
+                    </div>
+                `;
+            }
+
+            // Set current month as default
+            const today = new Date();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const yyyy = today.getFullYear();
+            document.getElementById('adminIndexMonth').value = `${yyyy}-${mm}`;
+            
+            window.loadKIndexForEdit();
+        };
+
+        window.closeKIndexAdminModal = function() {
+            document.getElementById('kIndexAdminModal').classList.add('hidden');
+        };
+
+        window.loadKIndexForEdit = function() {
+            const yyyy_mm = document.getElementById('adminIndexMonth').value;
+            const statusEl = document.getElementById('adminDbStatus');
+            
+            if (!yyyy_mm) {
+                statusEl.innerText = "รอเลือกเดือน...";
+                return;
+            }
+
+            const entryObj = window.getKDatabaseEntry(yyyy_mm);
+            
+            if (entryObj && entryObj.source === 'cloud') {
+                statusEl.innerHTML = `<span class="text-green-600"><i class="fa-solid fa-cloud-check"></i> ดึงข้อมูลจาก Cloud แล้ว</span>`;
+            } else {
+                statusEl.innerHTML = `<span class="text-red-500"><i class="fa-solid fa-file-circle-plus"></i> ยังไม่มีข้อมูลเดือนนี้ (กรอกใหม่)</span>`;
+            }
+
+            const data = entryObj ? entryObj.data : null;
+
+            for (const key of window.kIndexOrder) {
+                const inputEl = document.getElementById(`adminIdx_${key}`);
+                if (inputEl) {
+                    inputEl.value = data && data[key] ? data[key] : '';
+                }
+            }
+        };
+
+        // 🌟 ฟังก์ชัน Smart Paste (VLOOKUP Engine) ฉลาดและแม่นยำ 100% 🌟
+        window.handleSmartPaste = function(e) {
+            setTimeout(() => {
+                let text = e.target.value.replace(/,/g, ''); // ลบลูกน้ำออกก่อน
+                if (!text) return;
+                
+                // กฎ VLOOKUP: ค้นหาคำสำคัญ (Keywords) ของแต่ละดัชนี 
+                const vlookupRules = {
+                    M: ["M=", "ไม่รวมเหล็กและซีเมนต์", "M "],
+                    A: ["A=", "แอสฟัลท์", "A "],
+                    S: ["เหล็ก S", "ดัชนีราคาเหล็ก", " S "], // ดัก S ให้แม่นยำ ไม่ไปซ้ำกับตัวอื่น
+                    E: ["E=", "เครื่องจักรกล", " E "],
+                    C: ["C=", "ดัชนีราคาซีเมนต์", " C "],
+                    GIP: ["GIP=", "อาบสังกะสี"],
+                    G: ["G=", "แผ่นเรียบ", " G "],
+                    AC: ["AC=", "ใยหิน"],
+                    I: ["i=", "I=", "ผู้บริโภค"],
+                    PVC: ["PVC=", "ท่อ PVC"],
+                    F: ["F=", "น้ำมันดีเซล"],
+                    W: ["W=", "สายไฟฟ้า"],
+                    PE: ["PE=", "HDPE"]
+                };
+
+                let filledCount = 0;
+                
+                for (const key of Object.keys(window.kIndexLabels)) {
+                    const keywords = vlookupRules[key];
+                    let foundIndex = -1;
+                    
+                    // 1. วิ่งหา Keyword ในข้อความที่ก๊อปปี้มา
+                    for (const kw of keywords) {
+                        const idx = text.indexOf(kw);
+                        if (idx !== -1) {
+                            foundIndex = idx + kw.length;
+                            break;
+                        }
+                    }
+
+                    // 2. ถ้าเจอ Keyword ให้ดูดเอา "ตัวเลขทศนิยม" ตัวแรกที่โผล่มาหลังจากคำนั้น
+                    if (foundIndex !== -1) {
+                        const searchArea = text.substring(foundIndex);
+                        // หาตัวเลขที่มีทศนิยม 1-2 ตำแหน่ง
+                        const match = searchArea.match(/\s*(\d{2,4}\.\d{1,2})/);
+                        
+                        if (match) {
+                            const inputEl = document.getElementById(`adminIdx_${key}`);
+                            if (inputEl) {
+                                inputEl.value = parseFloat(match[1]).toFixed(1); // สนค. ปกติใช้ทศนิยม 1 ตำแหน่ง
+                                filledCount++;
+                            }
+                        }
+                    }
+                }
+
+                if (filledCount > 0) {
+                    window.showDialog(`🎉 <b>ระบบ VLOOKUP ทำงานสำเร็จ!</b><br><br>ค้นพบและดึงข้อมูลดัชนีตรงหมวดหมู่เป๊ะๆ จำนวน <b>${filledCount}</b> ค่า<br><br><span class="text-sm text-gray-500">ระบบได้ค้นหาคำสำคัญ (เช่น 'M=', 'น้ำมันดีเซล') และดึงตัวเลขมาใส่ให้อัตโนมัติแล้วครับ</span>`);
+                } else {
+                    window.showDialog("❌ ระบบ VLOOKUP หาข้อมูลไม่เจอครับ<br>โปรดกด Ctrl+A ก๊อปปี้ข้อความทั้งหมดในหน้า PDF แล้ววางใหม่อีกครั้งครับ");
+                }
+                
+                e.target.value = ''; // ล้างช่องทิ้ง
+            }, 100);
+        };
+
+        // 🌟 ฟังก์ชัน นำเข้า/ส่งออก Excel สำหรับฐานข้อมูลดัชนี 🌟
+        window.downloadKIndexExcelTemplate = function() {
+            const headers = ["เดือน-ปี (YYYY-MM)", ...window.kIndexOrder];
+            const ws_data = [
+                headers,
+                ["2024-05", 115.50, 124.00, 126.00, 111.00, 109.00, 142.00, 115.00, 150.00, 109.00, 113.00, 119.00, 111.00, 121.00],
+                ["", "", "", "", "", "", "", "", "", "", "", "", "", ""] // blank row
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            
+            ws['!cols'] = [{ wch: 18 }];
+            for(let i=0; i<window.kIndexOrder.length; i++) ws['!cols'].push({ wch: 8 });
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "K_Index_DB");
+            XLSX.writeFile(wb, "แบบฟอร์มนำเข้าฐานข้อมูลดัชนี_K.xlsx");
+        };
+
+        window.uploadKIndexExcel = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                    if (json.length === 0) {
+                        window.showDialog("ไม่พบข้อมูลในไฟล์ Excel ครับ");
+                        event.target.value = ''; return;
+                    }
+
+                    if (!currentUser || !db) {
+                        window.showDialog("กรุณาเชื่อมต่อคลาวด์ก่อนนำเข้าข้อมูลครับ");
+                        event.target.value = ''; return;
+                    }
+
+                    let successCount = 0;
+                    const indicator = document.getElementById('adminDbStatus');
+                    indicator.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-indigo-500"></i> กำลังอัปโหลดขึ้นคลาวด์...';
+
+                    for (const row of json) {
+                        let monthStr = row["เดือน-ปี (YYYY-MM)"];
+                        if (monthStr && String(monthStr).match(/^\d{4}-\d{2}$/)) {
+                            const indexData = {
+                                updatedAt: new Date().toLocaleString('th-TH'),
+                                updatedBy: currentUser.uid
+                            };
+                            window.kIndexOrder.forEach(k => {
+                                indexData[k] = parseFloat(row[k]) || 0;
+                            });
+                            
+                            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'k_indices', String(monthStr));
+                            await setDoc(docRef, indexData);
+                            successCount++;
+                        }
+                    }
+                    
+                    event.target.value = '';
+                    window.showDialog(`อัปโหลดและบันทึกดัชนีขึ้นระบบ Cloud สำเร็จจำนวน ${successCount} เดือน!`);
+                    window.loadKIndexForEdit(); 
+                    
+                } catch (error) {
+                    window.showDialog("เกิดข้อผิดพลาดในการอ่านไฟล์ Excel: " + error.message);
+                    event.target.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        window.saveKIndexToCloud = async function() {
+            if (!currentUser || !db) {
+                window.showDialog("ต้องเชื่อมต่อคลาวด์ก่อนบันทึกข้อมูลครับ");
+                return;
+            }
+
+            const yyyy_mm = document.getElementById('adminIndexMonth').value;
+            if (!yyyy_mm) {
+                window.showDialog("กรุณาเลือกเดือนที่ต้องการบันทึกข้อมูลครับ");
+                return;
+            }
+
+            const indexData = {};
+            let hasEmpty = false;
+            for (const key of window.kIndexOrder) {
+                const inputEl = document.getElementById(`adminIdx_${key}`);
+                const val = parseFloat(inputEl.value);
+                if (isNaN(val)) {
+                    hasEmpty = true;
+                } else {
+                    indexData[key] = val;
+                }
+            }
+
+            if (hasEmpty) {
+                window.showDialog("คำเตือน: ท่านยังกรอกข้อมูลดัชนีไม่ครบทุกตัว (ช่องที่ว่างจะไม่มีข้อมูลในฐาน)\nต้องการบันทึกต่อหรือไม่?", true, async (confirmed) => {
+                    if (confirmed) await executeSaveKIndex(yyyy_mm, indexData);
+                });
+            } else {
+                await executeSaveKIndex(yyyy_mm, indexData);
+            }
+        };
+
+        async function executeSaveKIndex(yyyy_mm, indexData) {
+            try {
+                indexData.updatedAt = new Date().toLocaleString('th-TH');
+                indexData.updatedBy = currentUser.uid;
+                
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'k_indices', yyyy_mm);
+                await setDoc(docRef, indexData);
+                
+                window.showDialog(`บันทึกฐานข้อมูลดัชนีประจำเดือน ${window.formatThaiMonth(yyyy_mm)} ขึ้นคลาวด์เรียบร้อยแล้วครับ!`);
+                window.closeKIndexAdminModal();
+            } catch (err) {
+                console.error("Save K-Index failed:", err);
+                window.showDialog("เกิดข้อผิดพลาดในการบันทึกฐานข้อมูลดัชนี");
+            }
+        }
+
+
+        // ==========================================
+        // การทำงานตอนโหลดหน้าเว็บครั้งแรก
+        // ==========================================
         window.onload = function() {
             if(document.getElementById('allocatedBudget')) {
                 window.handleNumberInput(document.getElementById('allocatedBudget'));
