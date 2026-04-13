@@ -831,6 +831,23 @@
                 <button onclick="window.closeKIndexTableModal()" class="text-gray-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             
+            <!-- 🌟 เพิ่มกราฟแนวโน้มดัชนี 🌟 -->
+            <div class="mb-4 bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-inner shrink-0">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-3">
+                    <h4 class="font-bold text-gray-800"><i class="fa-solid fa-chart-line text-blue-600 mr-2"></i>กราฟวิเคราะห์แนวโน้มดัชนี (Trend Analysis)</h4>
+                    <div class="flex flex-wrap gap-3 text-sm font-semibold text-gray-700 bg-white px-3 py-1.5 rounded-lg border border-gray-300 shadow-sm" id="trendChartToggles">
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" value="F" checked onchange="window.renderIndexTrendChart()" class="accent-red-600 w-4 h-4"> น้ำมัน (F)</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" value="S" checked onchange="window.renderIndexTrendChart()" class="accent-slate-700 w-4 h-4"> เหล็ก (S)</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" value="C" onchange="window.renderIndexTrendChart()" class="accent-gray-500 w-4 h-4"> ซีเมนต์ (C)</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" value="M" onchange="window.renderIndexTrendChart()" class="accent-indigo-600 w-4 h-4"> วัสดุ (M)</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" value="A" onchange="window.renderIndexTrendChart()" class="accent-neutral-900 w-4 h-4"> ยางมะตอย (A)</label>
+                    </div>
+                </div>
+                <div class="relative h-[200px] w-full">
+                    <canvas id="indexTrendChart"></canvas>
+                </div>
+            </div>
+
             <div class="overflow-auto flex-1 border border-gray-300 rounded-lg">
                 <table class="w-full text-left border-collapse text-xs md:text-sm whitespace-nowrap">
                     <thead class="bg-gray-100 text-gray-800 border-b-2 border-gray-300 sticky top-0 z-10 shadow-sm">
@@ -907,6 +924,7 @@
         // ประกาศตัวแปร Global
         window.myChart = null;
         window.ecoChart = null; 
+        window.indexTrendChart = null; // 🌟 เพิ่มตัวแปรสำหรับกราฟแนวโน้ม
         window.isPresentationMode = false;
         window.currentProjectId = null;
         window.cloudProjects = [];
@@ -3176,6 +3194,7 @@
             
             if (months.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-gray-500 italic font-semibold">ยังไม่มีข้อมูลในระบบฐานข้อมูลคลาวด์</td></tr>';
+                if (window.indexTrendChart) window.indexTrendChart.destroy(); // ลบกราฟถ้าไม่มีข้อมูล
                 return;
             }
             
@@ -3209,10 +3228,79 @@
                 
                 tbody.innerHTML += rowHtml;
             });
+            
+            // 🌟 สั่งให้วาดกราฟแนวโน้มทุกครั้งที่เปิดหน้าต่าง 🌟
+            setTimeout(() => window.renderIndexTrendChart(), 100); 
         };
 
         window.closeKIndexTableModal = function() {
             document.getElementById('kIndexTableModal').classList.add('hidden');
+        };
+        
+        // 🌟 ฟังก์ชันวาดกราฟแนวโน้มดัชนี (Trend Chart) 🌟
+        window.renderIndexTrendChart = function() {
+            const ctx = document.getElementById('indexTrendChart');
+            if (!ctx) return;
+            
+            if (window.indexTrendChart) window.indexTrendChart.destroy();
+            
+            const allData = { ...window.cloudKIndices };
+            const months = Object.keys(allData).sort(); // เรียงเก่าไปใหม่ (ซ้ายไปขวา)
+            
+            if (months.length === 0) return;
+            
+            const labels = months.map(m => window.formatThaiMonth(m));
+            
+            // คุมสีแต่ละเส้นให้จำง่าย
+            const colorMap = {
+                'F': 'rgb(220, 38, 38)',   // แดง (น้ำมัน)
+                'S': 'rgb(71, 85, 105)',   // เทาเข้ม (เหล็ก)
+                'C': 'rgb(156, 163, 175)', // เทาอ่อน (ซีเมนต์)
+                'M': 'rgb(79, 70, 229)',   // น้ำเงิน (วัสดุรวม)
+                'A': 'rgb(17, 24, 39)'     // ดำ (ยางมะตอย)
+            };
+            
+            const datasets = [];
+            const checkboxes = document.querySelectorAll('#trendChartToggles input[type="checkbox"]:checked');
+            
+            checkboxes.forEach(cb => {
+                const key = cb.value;
+                const labelName = window.kIndexLabels[key] ? window.kIndexLabels[key].name : key;
+                const dataPoints = months.map(m => allData[m][key] || null); // หาตัวเลขตามแต่ละเดือน
+                
+                datasets.push({
+                    label: labelName,
+                    data: dataPoints,
+                    borderColor: colorMap[key] || 'rgb(59, 130, 246)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.1,
+                    spanGaps: true // เส้นทะลุผ่านเดือนที่ขาดข้อมูล (ถ้ามีหลอ)
+                });
+            });
+
+            window.indexTrendChart = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { family: "'Sarabun', sans-serif", size: 12 }, boxWidth: 15 } },
+                        tooltip: { titleFont: { family: "'Sarabun', sans-serif" }, bodyFont: { family: "'Sarabun', sans-serif" } }
+                    },
+                    scales: {
+                        y: { ticks: { font: { family: "'Sarabun', sans-serif" } } },
+                        x: { ticks: { font: { family: "'Sarabun', sans-serif" } } }
+                    }
+                }
+            });
         };
 
         window.editKIndexFromTable = function(month) {
