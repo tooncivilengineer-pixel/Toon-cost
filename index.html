@@ -181,6 +181,11 @@
                         <i class="fa-solid fa-calculator mr-1"></i> คำนวณค่า K
                     </button>
 
+                    <!-- 🌟 ปุ่มเข้าสู่ระบบ e-GP 🌟 -->
+                    <button onclick="window.open('https://www.gprocurement.go.th/new_index.html', '_blank')" class="bg-blue-800 hover:bg-blue-900 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="เข้าสู่เว็บไซต์ระบบจัดซื้อจัดจ้างภาครัฐ (e-GP) ของกรมบัญชีกลาง">
+                        <i class="fa-solid fa-globe mr-1"></i> ระบบ e-GP
+                    </button>
+
                     <div class="w-px h-8 bg-gray-300 mx-1 hidden sm:block"></div>
                     <button onclick="window.clearAllData()" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="ล้างหน้าจอเพื่อเริ่มโครงการใหม่">
                         <i class="fa-solid fa-file-circle-plus mr-1"></i> สร้างใหม่
@@ -611,11 +616,11 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 pt-4 mt-2">
                             <div>
                                 <label class="block text-xs font-semibold text-blue-800 mb-1">เดือนเปิดซอง (เดือนฐาน - Index o):</label>
-                                <input type="month" id="kBaseMonth" class="w-full border border-blue-300 rounded px-2 py-1.5 text-sm focus:border-blue-500" onchange="window.updateKIndices()" value="2024-01">
+                                <input type="month" id="kBaseMonth" class="w-full border border-blue-300 rounded px-2 py-1.5 text-sm focus:border-blue-500" onchange="window.updateKIndices()">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-purple-800 mb-1">เดือนส่งงาน (เดือนคำนวณ - Index t):</label>
-                                <input type="month" id="kTargetMonth" class="w-full border border-purple-300 rounded px-2 py-1.5 text-sm focus:border-purple-500" onchange="window.updateKIndices()" value="2024-04">
+                                <input type="month" id="kTargetMonth" class="w-full border border-purple-300 rounded px-2 py-1.5 text-sm focus:border-purple-500" onchange="window.updateKIndices()">
                             </div>
                         </div>
                     </div>
@@ -826,7 +831,9 @@
             <div class="flex justify-between items-center mb-4 border-b pb-2 shrink-0">
                 <div>
                     <h3 class="text-xl font-bold text-gray-900"><i class="fa-solid fa-table-list text-blue-600 mr-2"></i>ภาพรวมฐานข้อมูลดัชนีพาณิชย์ (All Indices Database)</h3>
-                    <p class="text-sm text-gray-500 mt-1">ตรวจสอบความครบถ้วนของข้อมูลที่นำเข้า หากช่องใดขึ้น<span class="text-red-500 font-bold bg-red-50 px-1 rounded mx-1">- สีแดง</span>แสดงว่าข้อมูลไม่ครบถ้วน</p>
+                    <p class="text-sm text-blue-700 mt-1 bg-blue-50 px-3 py-1.5 rounded inline-block border border-blue-200">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i> ท่านสามารถ <b>คลิกที่ช่องในตารางเพื่อพิมพ์แก้ไขหรือเพิ่มเติมตัวเลขได้เลย</b> (ระบบจะบันทึกขึ้น Cloud ให้อัตโนมัติเมื่อพิมพ์เสร็จ)
+                    </p>
                 </div>
                 <button onclick="window.closeKIndexTableModal()" class="text-gray-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -1576,9 +1583,6 @@
                 btn.disabled = false;
             }
         };
-
-        // ประกาศตัวแปร Global เพื่อส่งค่าไปใช้ข้ามฟังก์ชัน
-        window.globalNetCostDiff = 0;
 
         window.calculateTotals = function() {
             let totalOld = 0, totalNew = 0;
@@ -2617,7 +2621,8 @@
                     window.formatThaiMonth(document.getElementById('kBaseMonth').value),
                     window.formatThaiMonth(document.getElementById('kTargetMonth').value),
                     actualCostDiff,
-                    totalCompensation
+                    totalCompensation,
+                    totalCalculatedWorkValue
                 );
 
             } else {
@@ -2800,11 +2805,16 @@
         };
 
         // 🌟 ฟังก์ชันวาดกราฟเส้นวิเคราะห์เศรษฐศาสตร์ (Economic Analysis Chart) 🌟
-        window.updateEcoChart = function(baseMonthStr, targetMonthStr, actualDiff, kComp) {
+        window.updateEcoChart = function(baseMonthStr, targetMonthStr, actualDiff, kComp, totalWorkValue) {
             const ctx = document.getElementById('ecoChart');
             if (!ctx) return;
             
             if (window.ecoChart) window.ecoChart.destroy();
+            
+            // คำนวณกำไร/ขาดทุนสุทธิ (Net Impact)
+            const netImpact = kComp - actualDiff;
+            // ตรวจสอบว่ากำไรหรือขาดทุน เพื่อกำหนดสี
+            const isProfit = netImpact >= 0;
             
             window.ecoChart = new Chart(ctx.getContext('2d'), {
                 type: 'line',
@@ -2812,26 +2822,40 @@
                     labels: [baseMonthStr + " (เดือนเปิดซอง)", targetMonthStr + " (เดือนส่งงาน)"],
                     datasets: [
                         {
-                            label: 'ต้นทุนที่เพิ่มขึ้นจริง (Actual Cost)',
-                            data: [0, actualDiff],
-                            borderColor: 'rgb(234, 88, 12)', // Orange 600
-                            backgroundColor: 'rgba(234, 88, 12, 0.1)',
-                            borderWidth: 3,
-                            pointRadius: 6,
-                            pointHoverRadius: 8,
+                            label: 'กำไร/ขาดทุนสุทธิของผู้รับจ้าง (Net Impact)',
+                            data: [0, netImpact],
+                            borderColor: isProfit ? 'rgb(37, 99, 235)' : 'rgb(220, 38, 38)', // Blue if profit, Red if loss
+                            backgroundColor: isProfit ? 'rgba(37, 99, 235, 0.15)' : 'rgba(220, 38, 38, 0.15)',
+                            borderWidth: 4,
+                            pointRadius: 8,
+                            pointHoverRadius: 10,
                             fill: true,
-                            tension: 0.1
+                            tension: 0.1,
+                            order: 1 // ให้อยู่ด้านหน้าสุด
                         },
                         {
-                            label: 'เงินชดเชยค่า K (K-Compensation)',
+                            label: 'ต้นทุนที่เปลี่ยนแปลงจริง (Actual Cost)',
+                            data: [0, actualDiff],
+                            borderColor: 'rgb(249, 115, 22)', // Orange 500
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5], // เส้นประ
+                            pointRadius: 4,
+                            fill: false,
+                            tension: 0.1,
+                            order: 2
+                        },
+                        {
+                            label: 'เงินชดเชยค่า K ที่รัฐจ่าย (K-Compensation)',
                             data: [0, kComp],
-                            borderColor: 'rgb(5, 150, 105)', // Emerald 600
-                            backgroundColor: 'rgba(5, 150, 105, 0.1)',
-                            borderWidth: 3,
-                            pointRadius: 6,
-                            pointHoverRadius: 8,
-                            fill: true,
-                            tension: 0.1
+                            borderColor: 'rgb(16, 185, 129)', // Emerald 500
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5], // เส้นประ
+                            pointRadius: 4,
+                            fill: false,
+                            tension: 0.1,
+                            order: 3
                         }
                     ]
                 },
@@ -2845,17 +2869,23 @@
                     plugins: {
                         legend: {
                             position: 'top',
-                            labels: { font: { family: "'Sarabun', sans-serif", size: 12 } }
+                            labels: { 
+                                font: { family: "'Sarabun', sans-serif", size: 12 },
+                                usePointStyle: true,
+                                boxWidth: 8
+                            }
                         },
                         tooltip: {
-                            titleFont: { family: "'Sarabun', sans-serif" },
-                            bodyFont: { family: "'Sarabun', sans-serif" },
+                            titleFont: { family: "'Sarabun', sans-serif", size: 14 },
+                            bodyFont: { family: "'Sarabun', sans-serif", size: 13 },
+                            padding: 12,
                             callbacks: {
                                 label: function(context) {
                                     let label = context.dataset.label || '';
                                     if (label) label += ': ';
                                     if (context.parsed.y !== null) {
-                                        label += window.formatNumber(context.parsed.y) + ' บาท';
+                                        const prefix = context.parsed.y > 0 ? '+' : '';
+                                        label += prefix + window.formatNumber(context.parsed.y) + ' บาท';
                                     }
                                     return label;
                                 }
@@ -2864,16 +2894,27 @@
                     },
                     scales: {
                         y: {
-                            beginAtZero: true,
+                            grid: {
+                                color: function(context) {
+                                    if (context.tick.value === 0) {
+                                        return 'rgba(0, 0, 0, 0.4)'; // เส้นแกน 0 (จุดคุ้มทุน) ให้สีเข้มขึ้น
+                                    }
+                                    return 'rgba(0, 0, 0, 0.05)';
+                                },
+                                lineWidth: function(context) {
+                                    if (context.tick.value === 0) return 2; // ทำให้เส้นจุดคุ้มทุนหนาขึ้น
+                                    return 1;
+                                }
+                            },
                             ticks: {
                                 font: { family: "'Sarabun', sans-serif" },
                                 callback: function(value) {
-                                    return value >= 1000000 ? (value/1000000).toFixed(1)+'M' : (value>=1000 ? (value/1000).toFixed(0)+'k' : value);
+                                    return value >= 1000000 || value <= -1000000 ? (value/1000000).toFixed(1)+'M' : (value>=1000 || value<=-1000 ? (value/1000).toFixed(0)+'k' : value);
                                 }
                             }
                         },
                         x: {
-                            ticks: { font: { family: "'Sarabun', sans-serif" } }
+                            ticks: { font: { family: "'Sarabun', sans-serif", weight: 'bold' } }
                         }
                     }
                 }
@@ -3182,13 +3223,13 @@
             }
         }
 
-        // 🌟 ฟังก์ชันจัดการตารางข้อมูลดัชนีทั้งหมด 🌟
+        // 🌟 ฟังก์ชันจัดการตารางข้อมูลดัชนีทั้งหมด (อัปเกรด Inline Editing) 🌟
         window.openKIndexTableModal = function() {
             document.getElementById('kIndexTableModal').classList.remove('hidden');
             const tbody = document.getElementById('kIndexTableBody');
             tbody.innerHTML = '';
             
-            // ใช้เฉพาะข้อมูลจาก Cloud เท่านั้น (ยกเลิก default built-in data)
+            // ใช้เฉพาะข้อมูลจาก Cloud เท่านั้น
             const allData = { ...window.cloudKIndices };
             const months = Object.keys(allData).sort().reverse(); // เรียงเดือนใหม่ล่าสุดขึ้นก่อน
             
@@ -3200,27 +3241,34 @@
             
             months.forEach(month => {
                 const data = allData[month];
-                const badge = '<span class="text-[0.6rem] bg-green-100 text-green-700 px-1.5 rounded-full shadow-sm ml-1 border border-green-200">Cloud</span>';
+                const badge = '<span class="text-[0.6rem] bg-green-100 text-green-700 px-1.5 rounded-full shadow-sm mt-1 inline-block border border-green-200">Cloud</span>';
                 
-                let rowHtml = `<tr class="hover:bg-blue-50 transition">
-                    <td class="p-2 border-r border-gray-200 text-center font-bold text-gray-700 sticky left-0 bg-white z-0">${window.formatThaiMonth(month)}<br>${badge}</td>`;
+                let rowHtml = `<tr class="hover:bg-blue-50 transition group">
+                    <td class="p-2 border-r border-gray-200 text-center font-bold text-gray-700 sticky left-0 bg-white z-0 align-middle">${window.formatThaiMonth(month)}<br>${badge}</td>`;
                 
                 window.kIndexOrder.forEach(key => {
                     const val = data[key];
-                    // ถ้าค่าว่าง เป็น 0 หรือไม่ใช่ตัวเลข ให้ไฮไลท์สีแดงเพื่อดึงดูดสายตา
-                    if (val === undefined || val === null || val === 0 || isNaN(val) || val === '') {
-                        rowHtml += `<td class="p-2 border-r border-gray-200 text-center text-red-500 font-bold bg-red-50">-</td>`;
-                    } else {
-                        rowHtml += `<td class="p-2 border-r border-gray-200 text-center text-gray-700 font-medium">${val.toFixed(1)}</td>`;
-                    }
+                    const isEmpty = (val === undefined || val === null || val === 0 || isNaN(val) || val === '');
+                    const displayVal = isEmpty ? '' : val.toFixed(1);
+                    
+                    // สไตล์ของกล่อง Input: ถ้าว่างให้แดงเตะตา ถ้ากรอกแล้วให้เนียนไปกับตาราง
+                    const colorClass = isEmpty 
+                        ? 'bg-red-50 border-red-300 text-red-600 placeholder-red-300 shadow-inner' 
+                        : 'bg-transparent text-gray-800 border-transparent hover:border-gray-300 focus:bg-white focus:border-blue-500';
+                    
+                    rowHtml += `
+                        <td class="p-1 border-r border-gray-200 text-center align-middle">
+                            <input type="text" inputmode="decimal" placeholder="-" value="${displayVal}"
+                            class="w-full min-w-[50px] max-w-[70px] text-center text-sm font-semibold p-1.5 border rounded transition-all outline-none focus:ring-2 focus:ring-blue-200 ${colorClass}"
+                            onfocus="this.select()"
+                            oninput="this.value = this.value.replace(/[^0-9.]/g, '');"
+                            onchange="window.quickSaveIndex('${month}', '${key}', this)">
+                        </td>`;
                 });
                 
                 rowHtml += `
-                    <td class="p-2 text-center sticky right-0 bg-white z-0 shadow-[-2px_0_5px_rgba(0,0,0,0.05)]">
-                        <button onclick="window.editKIndexFromTable('${month}')" class="bg-blue-100 hover:bg-blue-600 hover:text-white text-blue-600 p-1.5 rounded transition mr-1" title="แก้ไขเดือนนี้">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <button onclick="window.deleteKIndexFromTable('${month}')" class="bg-red-100 hover:bg-red-600 hover:text-white text-red-500 p-1.5 rounded transition" title="ลบข้อมูล">
+                    <td class="p-2 text-center sticky right-0 bg-white z-0 shadow-[-2px_0_5px_rgba(0,0,0,0.05)] align-middle">
+                        <button onclick="window.deleteKIndexFromTable('${month}')" class="bg-red-50 hover:bg-red-600 hover:text-white text-red-400 p-2 rounded transition opacity-50 group-hover:opacity-100" title="ลบข้อมูลทั้งเดือน">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </td>
@@ -3236,13 +3284,80 @@
         window.closeKIndexTableModal = function() {
             document.getElementById('kIndexTableModal').classList.add('hidden');
         };
-        
+
+        // 🌟 ฟังก์ชันบันทึกข้อมูลดัชนีทันทีที่พิมพ์แก้เสร็จ (Auto-Save) 🌟
+        window.quickSaveIndex = async function(month, key, inputEl) {
+            let val = parseFloat(inputEl.value);
+
+            // 1. จัดการ UI สลับสีตามการกรอก
+            if (isNaN(val) || val === 0) {
+                inputEl.value = '';
+                inputEl.className = "w-full min-w-[50px] max-w-[70px] text-center text-sm font-semibold p-1.5 border rounded transition-all outline-none focus:ring-2 focus:ring-blue-200 bg-red-50 border-red-300 text-red-600 placeholder-red-300 shadow-inner";
+                val = 0; // ใน Firebase บันทึกเป็น 0 ไปก่อน
+            } else {
+                inputEl.value = val.toFixed(1);
+                inputEl.className = "w-full min-w-[50px] max-w-[70px] text-center text-sm font-semibold p-1.5 border rounded transition-all outline-none focus:ring-2 focus:ring-blue-200 bg-transparent text-gray-800 border-transparent hover:border-gray-300 focus:bg-white focus:border-blue-500";
+            }
+
+            if (!currentUser || !db) return; // ไม่ได้ต่อเน็ตก็ข้ามไป
+
+            try {
+                // 2. ส่งข้อมูลส่วนที่แก้ ขึ้นไปอัปเดตบน Cloud แบบผสาน (Merge)
+                const updateData = {
+                    updatedAt: new Date().toLocaleString('th-TH'),
+                    updatedBy: currentUser.uid,
+                    [key]: val
+                };
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'k_indices', month);
+                await setDoc(docRef, updateData, { merge: true });
+                
+                // 3. แอบอัปเดตข้อมูลในหน่วยความจำเครื่อง เพื่อไม่ให้กราฟกระตุก
+                if(!window.cloudKIndices[month]) window.cloudKIndices[month] = {};
+                window.cloudKIndices[month][key] = val;
+                
+                // 4. อัปเดตกราฟเส้นแนวโน้มอัตโนมัติ
+                if (document.getElementById('indexTrendChart')) {
+                    window.renderIndexTrendChart();
+                }
+                
+                // เอฟเฟกต์สีเขียวกระพริบ 1 วินาที เพื่อบอกว่าเซฟเสร็จแล้ว
+                inputEl.style.backgroundColor = '#dcfce7'; // สีเขียวอ่อน
+                setTimeout(() => { inputEl.style.backgroundColor = ''; }, 1000);
+
+            } catch (err) {
+                console.error("Quick save error:", err);
+                window.showDialog("❌ บันทึกข้อมูลล้มเหลว กรุณาตรวจสอบอินเทอร์เน็ต");
+            }
+        };
+
+        window.deleteKIndexFromTable = async function(month) {
+            window.showDialog(`⚠️ <b>ยืนยันการลบข้อมูล</b><br><br>คุณแน่ใจหรือไม่ที่จะลบข้อมูลดัชนีเดือน <b>${window.formatThaiMonth(month)}</b> ออกจากระบบ Cloud แบบถาวร?`, true, async (confirmed) => {
+                if (!confirmed) return;
+                if (!currentUser || !db) return;
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'k_indices', month);
+                    await deleteDoc(docRef);
+                    window.showDialog(`✅ ลบข้อมูลเดือน ${window.formatThaiMonth(month)} สำเร็จ!`);
+                    window.openKIndexTableModal(); // รีเฟรชตาราง
+                    
+                    // ถ้าเดือนที่กำลังเปิดอยู่ในหน้าฟอร์มโดนลบไป ก็รีเฟรชหน้าฟอร์มด้วย
+                    if (document.getElementById('adminIndexMonth').value === month) {
+                        window.loadKIndexForEdit();
+                    }
+                } catch(e) {
+                    window.showDialog("❌ เกิดข้อผิดพลาดในการลบข้อมูล: " + e.message);
+                }
+            });
+        };
+
         // 🌟 ฟังก์ชันวาดกราฟแนวโน้มดัชนี (Trend Chart) 🌟
         window.renderIndexTrendChart = function() {
             const ctx = document.getElementById('indexTrendChart');
             if (!ctx) return;
             
-            if (window.indexTrendChart) window.indexTrendChart.destroy();
+            if (window.indexTrendChart instanceof Chart) {
+                window.indexTrendChart.destroy();
+            }
             
             const allData = { ...window.cloudKIndices };
             const months = Object.keys(allData).sort(); // เรียงเก่าไปใหม่ (ซ้ายไปขวา)
@@ -3302,33 +3417,6 @@
                 }
             });
         };
-
-        window.editKIndexFromTable = function(month) {
-            window.closeKIndexTableModal();
-            document.getElementById('adminIndexMonth').value = month;
-            window.loadKIndexForEdit(); // สั่งให้หน้าต่างกรอกดัชนีดึงข้อมูลมาโชว์
-        };
-
-        window.deleteKIndexFromTable = async function(month) {
-            window.showDialog(`⚠️ <b>ยืนยันการลบข้อมูล</b><br><br>คุณแน่ใจหรือไม่ที่จะลบข้อมูลดัชนีเดือน <b>${window.formatThaiMonth(month)}</b> ออกจากระบบ Cloud แบบถาวร?`, true, async (confirmed) => {
-                if (!confirmed) return;
-                if (!currentUser || !db) return;
-                try {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'k_indices', month);
-                    await deleteDoc(docRef);
-                    window.showDialog(`✅ ลบข้อมูลเดือน ${window.formatThaiMonth(month)} สำเร็จ!`);
-                    window.openKIndexTableModal(); // รีเฟรชตาราง
-                    
-                    // ถ้าเดือนที่กำลังเปิดอยู่ในหน้าฟอร์มโดนลบไป ก็รีเฟรชหน้าฟอร์มด้วย
-                    if (document.getElementById('adminIndexMonth').value === month) {
-                        window.loadKIndexForEdit();
-                    }
-                } catch(e) {
-                    window.showDialog("❌ เกิดข้อผิดพลาดในการลบข้อมูล: " + e.message);
-                }
-            });
-        };
-
 
         // ==========================================
         // การทำงานตอนโหลดหน้าเว็บครั้งแรก
