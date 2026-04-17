@@ -377,7 +377,10 @@
                 <button onclick="window.closeKIndexAdminModal()" class="text-gray-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200 mb-6">
-                <h4 class="font-bold text-emerald-900 mb-2"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> ระบบวางตัวเลขด่วน (VLOOKUP อัจฉริยะ)</h4>
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-bold text-emerald-900"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> ระบบวางตัวเลขด่วน (VLOOKUP อัจฉริยะ)</h4>
+                    <a href="https://index.tpso.go.th/escalation-factors/report-monthly" target="_blank" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-1.5 px-3 rounded transition shadow-sm flex items-center"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> เว็บดัชนีพาณิชย์ (สนค.)</a>
+                </div>
                 <input type="text" id="smartPasteInput" placeholder="Ctrl+V วางข้อมูล PDF ที่นี่..." class="w-full border border-emerald-300 rounded px-3 py-2 text-sm focus:border-emerald-500 font-mono shadow-inner" onpaste="window.handleSmartPaste(event)">
             </div>
             <div class="flex justify-between items-center mb-4 gap-4">
@@ -895,6 +898,7 @@
         };
         
         window.printKValueReport = window.printKValueReport || function() { document.body.classList.add('print-k-value'); window.print(); setTimeout(() => document.body.classList.remove('print-k-value'), 500); };
+        window.printMasterSummary = window.printMasterSummary || function() { document.body.classList.add('print-modal-only'); window.print(); setTimeout(() => document.body.classList.remove('print-modal-only'), 500); };
         window.renderIndexTrendChart = window.renderIndexTrendChart || function() {};
         window.quickSaveIndex = window.quickSaveIndex || function() {};
 
