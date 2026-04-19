@@ -28,7 +28,7 @@
         @media print {
             body { background-color: white; }
             body:not(.print-modal-only):not(.print-k-value) .no-print { display: none !important; }
-            body:not(.print-modal-only):not(.print-k-value) #masterSummaryModal, body:not(.print-modal-only):not(.print-k-value) #kValueModal, body:not(.print-modal-only):not(.print-k-value) #kIndexAdminModal, body:not(.print-modal-only):not(.print-k-value) #kIndexTableModal, body:not(.print-modal-only):not(.print-k-value) #materialPriceModal, body:not(.print-modal-only):not(.print-k-value) #materialFileListModal { display: none !important; }
+            body:not(.print-modal-only):not(.print-k-value) #masterSummaryModal, body:not(.print-modal-only):not(.print-k-value) #kValueModal, body:not(.print-modal-only):not(.print-k-value) #kIndexAdminModal, body:not(.print-modal-only):not(.print-k-value) #kIndexTableModal, body:not(.print-modal-only):not(.print-k-value) #materialPriceModal, body:not(.print-modal-only):not(.print-k-value) #materialFileListModal, body:not(.print-modal-only):not(.print-k-value) #costCalcModal { display: none !important; }
             body:not(.print-modal-only):not(.print-k-value) .print-shadow-none { box-shadow: none; border: none; }
             body:not(.print-modal-only):not(.print-k-value) input { border: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; width: 100%; }
             body:not(.print-modal-only):not(.print-k-value) input::placeholder { color: transparent; }
@@ -41,7 +41,7 @@
             body.print-modal-only table { width: 100% !important; border-collapse: collapse !important; }
             body.print-modal-only th, body.print-modal-only td { border: 1px solid #9ca3af !important; }
 
-            body.print-k-value #mainContainer, body.print-k-value #masterSummaryModal, body.print-k-value #kIndexAdminModal, body.print-k-value #kIndexTableModal, body.print-k-value #projectModal, body.print-k-value #materialPriceModal, body.print-k-value #materialFileListModal { display: none !important; }
+            body.print-k-value #mainContainer, body.print-k-value #masterSummaryModal, body.print-k-value #kIndexAdminModal, body.print-k-value #kIndexTableModal, body.print-k-value #projectModal, body.print-k-value #materialPriceModal, body.print-k-value #materialFileListModal, body.print-k-value #costCalcModal { display: none !important; }
             body.print-k-value #kValueModal { position: relative !important; inset: auto !important; background: white !important; display: block !important; padding: 0 !important; }
             body.print-k-value #kValueModal > div { box-shadow: none !important; max-width: 100% !important; width: 100% !important; padding: 0 !important; border: none !important; max-height: none !important; overflow: visible !important; }
             body.print-k-value .overflow-y-auto, body.print-k-value .max-h-[95vh], body.print-k-value .max-h-48 { overflow: visible !important; max-height: none !important; }
@@ -381,7 +381,7 @@
                     <h4 class="font-bold text-emerald-900"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> ระบบวางตัวเลขด่วน (VLOOKUP อัจฉริยะ)</h4>
                     <a href="https://index.tpso.go.th/escalation-factors/report-monthly" target="_blank" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-1.5 px-3 rounded transition shadow-sm flex items-center"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> เว็บดัชนีพาณิชย์ (สนค.)</a>
                 </div>
-                <input type="text" id="smartPasteInput" placeholder="Ctrl+V วางข้อมูล PDF ที่นี่..." class="w-full border border-emerald-300 rounded px-3 py-2 text-sm focus:border-emerald-500 font-mono shadow-inner" onpaste="window.handleSmartPaste(event)">
+                <textarea id="smartPasteInput" rows="2" placeholder="Ctrl+V วางข้อมูลดัชนีจาก PDF ที่นี่ (คัดลอกให้ติดชื่อดัชนีมาด้วย)..." class="w-full border border-emerald-300 rounded px-3 py-2 text-sm focus:border-emerald-500 font-mono shadow-inner" onpaste="window.handleSmartPaste(event)"></textarea>
             </div>
             <div class="flex justify-between items-center mb-4 gap-4">
                 <div class="flex items-center gap-4"><label class="font-bold text-gray-800">เดือน:</label><input type="month" id="adminIndexMonth" class="border border-gray-300 rounded px-3 py-2 text-sm" onchange="window.loadKIndexForEdit()"><span id="adminDbStatus" class="text-sm font-semibold text-gray-500 ml-2">รอเลือก...</span></div>
@@ -434,6 +434,7 @@
                 <div><h3 class="text-xl font-bold text-gray-900"><i class="fa-solid fa-tags text-emerald-600 mr-2"></i>ระบบฐานข้อมูลราคากลางวัสดุก่อสร้าง</h3></div>
                 <button onclick="window.closeMaterialPriceModal()" class="text-gray-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 shrink-0">
                 <div class="bg-teal-50 p-4 rounded-lg border border-teal-200 shadow-sm flex flex-col justify-center">
                     <h4 class="font-bold text-teal-900 mb-2 text-sm"><i class="fa-solid fa-link mr-1"></i> แหล่งอ้างอิงข้อมูลราคากลาง (ภายนอก)</h4>
@@ -448,52 +449,117 @@
                 </div>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4 shrink-0 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div class="col-span-1 md:col-span-2">
-                    <label class="block text-xs font-bold text-gray-700 mb-1">พื้นที่ / จังหวัด:</label>
-                    <select id="matDbProvince" class="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white"><option>ส่วนกลาง</option><option selected>พิษณุโลก</option><option>สุโขทัย</option><option>อุตรดิตถ์</option><option>พิจิตร</option><option>เพชรบูรณ์</option></select>
+            <div class="mb-4 bg-white p-4 rounded-lg border border-blue-200 shadow-sm shrink-0 hidden" id="materialChartSection">
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-bold text-gray-800" id="materialChartTitle"><i class="fa-solid fa-chart-line text-blue-600 mr-2"></i>กราฟเปรียบเทียบราคา</h4>
+                    <button onclick="document.getElementById('materialChartSection').classList.add('hidden')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-                <div class="col-span-1 md:col-span-2">
-                    <label class="block text-xs font-bold text-gray-700 mb-1">ประจำเดือน:</label>
-                    <input type="month" id="matDbMonth" class="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:border-emerald-500">
-                </div>
-                <div class="col-span-1 md:col-span-3">
-                    <label class="block text-xs font-bold text-orange-600 mb-1">ราคายางทิปโก้ (บาท/ตัน):</label>
-                    <input type="text" id="tipcoPrice" placeholder="0.00" class="w-full border border-orange-300 rounded px-3 py-2 text-sm font-bold text-orange-700 bg-white focus:border-orange-500 shadow-sm" onfocus="this.select()" onblur="if(!isNaN(parseFloat(this.value.replace(/,/g,'')))){ this.value = parseFloat(this.value.replace(/,/g,'')).toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }">
-                </div>
-                <div class="col-span-1 md:col-span-5 flex items-end gap-2 flex-wrap justify-end">
-                    <button onclick="window.openMaterialFileList()" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded text-sm transition shadow-sm"><i class="fa-solid fa-folder-open mr-1"></i> เปิดแฟ้ม</button>
-                    <button onclick="window.loadMaterialFromCloud()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded text-sm transition shadow-sm"><i class="fa-solid fa-cloud-arrow-down mr-1"></i> โหลด</button>
-                    <label class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded cursor-pointer transition text-sm mb-0 shadow-sm"><i class="fa-solid fa-file-excel mr-1"></i> นำเข้า Excel<input type="file" accept=".csv, .xlsx, .xls" class="hidden" onchange="window.importMaterialData(event)"></label>
-                    <button onclick="window.saveMaterialToCloud()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded text-sm transition shadow-sm"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> บันทึกขึ้น Cloud</button>
-                </div>
-            </div>
-
-            <div class="flex flex-wrap justify-between items-center mb-4 gap-4 shrink-0 bg-gray-50 p-3 rounded-lg border border-gray-200 shadow-inner">
-                <div class="flex-1 relative min-w-[250px]"><i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchMaterial" placeholder="พิมพ์ค้นหาชื่อวัสดุ หรือ รหัส..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:border-emerald-500 shadow-sm" oninput="window.filterMaterialTable()"></div>
-                <div class="text-sm font-semibold text-emerald-700 bg-emerald-100 px-3 py-2 rounded-lg border border-emerald-200" id="materialCount">จำนวน: 0 รายการ</div>
-                <div class="flex gap-2"><button onclick="window.addNewMaterialRow()" class="bg-white hover:bg-emerald-50 text-emerald-700 font-semibold py-2 px-4 rounded-lg border border-emerald-300"><i class="fa-solid fa-plus mr-1"></i> เพิ่มแถว</button><button onclick="window.clearMaterialData()" class="bg-white hover:bg-red-50 text-red-600 font-semibold py-2 px-4 rounded-lg border border-red-200"><i class="fa-solid fa-trash-can mr-1"></i> ล้างตาราง</button></div>
-            </div>
-            <div class="mb-4 bg-white p-4 rounded-lg border border-emerald-200 shadow-sm shrink-0 hidden" id="materialChartSection">
-                <div class="flex justify-between items-center mb-3"><h4 class="font-bold text-gray-800" id="materialChartTitle"><i class="fa-solid fa-chart-line text-emerald-600 mr-2"></i>กราฟแนวโน้มราคา</h4><button onclick="document.getElementById('materialChartSection').classList.add('hidden')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button></div>
                 <div class="relative h-[250px] w-full"><canvas id="materialTrendChart"></canvas></div>
             </div>
-            <div class="overflow-auto flex-1 border border-gray-300 rounded-lg bg-white relative">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead class="bg-emerald-50 text-emerald-900 border-b-2 border-emerald-200 sticky top-0 z-10 shadow-sm"><tr><th class="p-3 border-r w-[15%] font-bold text-center">รหัส</th><th class="p-3 border-r font-bold">รายการวัสดุก่อสร้าง</th><th class="p-3 border-r w-[15%] text-right font-bold">ราคา (บาท)</th><th class="p-3 border-r w-[10%] text-center font-bold">หน่วย</th><th class="p-3 w-[15%] text-center font-bold">จัดการ</th></tr></thead>
-                    <tbody class="thai-number divide-y divide-gray-200" id="materialTableBody"><tr><td colspan="5" class="p-12 text-center text-gray-500 italic"><i class="fa-solid fa-cloud-arrow-down text-4xl mb-3 text-gray-300 block"></i>กรุณาเลือกจังหวัดและเดือน แล้วกด "โหลด"</td></tr></tbody>
-                </table>
+            
+            <div class="flex-1 overflow-y-auto pr-2 flex flex-col gap-5">
+                
+                <!-- 1. ส่วนวัสดุจังหวัด -->
+                <div class="bg-teal-50/40 p-4 rounded-lg border border-teal-200 shadow-inner flex flex-col h-auto min-h-[400px]">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-teal-300 pb-3 mb-3 gap-3">
+                        <h4 class="font-bold text-teal-900 text-lg whitespace-nowrap"><i class="fa-solid fa-map-location-dot text-teal-600 mr-2"></i>ส่วนที่ 1: แฟ้มวัสดุจังหวัด</h4>
+                        <div class="flex flex-wrap gap-2 w-full md:w-auto justify-end">
+                            <input type="month" id="matDbMonth" class="border border-teal-300 rounded px-3 py-1.5 text-sm bg-white focus:border-teal-500">
+                            <select id="matDbProvince" class="border border-teal-300 rounded px-3 py-1.5 text-sm bg-white">
+                                <option>ส่วนกลาง</option><option selected>พิษณุโลก</option><option>สุโขทัย</option><option>อุตรดิตถ์</option><option>พิจิตร</option><option>เพชรบูรณ์</option>
+                            </select>
+                            <button onclick="window.loadMaterialFromCloud()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-3 rounded text-sm transition shadow-sm"><i class="fa-solid fa-cloud-arrow-down mr-1"></i> โหลด</button>
+                            <button onclick="window.saveMaterialToCloud()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1.5 px-3 rounded text-sm transition shadow-sm"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> บันทึก</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap justify-between items-center mb-3 gap-3 shrink-0">
+                        <div class="flex-1 relative min-w-[200px]">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400"></i>
+                            <input type="text" id="searchMaterial" placeholder="ค้นหาชื่อวัสดุ หรือ รหัส..." class="w-full pl-9 pr-3 py-1.5 border border-teal-300 rounded-lg text-sm focus:border-teal-500 shadow-sm" oninput="window.filterMaterialTable()">
+                        </div>
+                        <div class="text-xs font-semibold text-teal-800 bg-teal-100 px-3 py-1.5 rounded-lg border border-teal-200" id="materialCount">จำนวน: 0 รายการ</div>
+                        <div class="flex gap-2">
+                            <button onclick="window.addNewMaterialRow()" class="bg-white hover:bg-teal-100 text-teal-700 font-semibold py-1.5 px-3 text-sm rounded-lg border border-teal-300"><i class="fa-solid fa-plus mr-1"></i> เพิ่มแถว</button>
+                            <label class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-1.5 px-3 rounded-lg cursor-pointer transition text-sm mb-0 shadow-sm"><i class="fa-solid fa-file-excel mr-1"></i> นำเข้า<input type="file" accept=".csv, .xlsx, .xls" class="hidden" onchange="window.importMaterialData(event)"></label>
+                            <button onclick="window.clearMaterialData()" class="bg-white hover:bg-red-50 text-red-600 font-semibold py-1.5 px-3 text-sm rounded-lg border border-red-200"><i class="fa-solid fa-trash-can mr-1"></i> ล้าง</button>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto border border-teal-300 rounded-lg bg-white relative">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="bg-teal-100 text-teal-900 border-b-2 border-teal-300 sticky top-0 z-10 shadow-sm">
+                                <tr><th class="p-2 border-r w-[15%] font-bold text-center">รหัส</th><th class="p-2 border-r font-bold">รายการวัสดุก่อสร้าง</th><th class="p-2 border-r w-[15%] text-right font-bold">ราคา (บาท)</th><th class="p-2 border-r w-[10%] text-center font-bold">หน่วย</th><th class="p-2 w-[15%] text-center font-bold">จัดการ</th></tr>
+                            </thead>
+                            <tbody class="thai-number divide-y divide-teal-100" id="materialTableBody">
+                                <tr><td colspan="5" class="p-8 text-center text-teal-600 italic"><i class="fa-solid fa-cloud-arrow-down text-3xl mb-2 text-teal-300 block"></i>เลือกจังหวัดและเดือน แล้วกด "โหลด"</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. ส่วนยางทิปโก้ -->
+                <div class="bg-orange-50/40 p-4 rounded-lg border border-orange-200 shadow-inner flex flex-col h-auto min-h-[300px]">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-orange-300 pb-3 mb-3 gap-3">
+                        <h4 class="font-bold text-orange-900 text-lg whitespace-nowrap"><i class="fa-solid fa-road text-orange-600 mr-2"></i>ส่วนที่ 2: แฟ้มราคายางทิปโก้ (แยกส่วน)</h4>
+                        <div class="flex gap-2 flex-wrap w-full md:w-auto justify-end">
+                            <input type="month" id="tipcoMonth" class="border border-orange-300 rounded px-3 py-1.5 text-sm bg-white focus:border-orange-500">
+                            <button onclick="window.loadTipcoFromCloudByMonth()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-3 rounded text-sm transition shadow-sm"><i class="fa-solid fa-cloud-arrow-down mr-1"></i> โหลดแฟ้มยาง</button>
+                            <button onclick="window.saveTipcoToCloud()" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-1.5 px-3 rounded text-sm transition shadow-sm"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> บันทึกแฟ้มยาง</button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 mb-3 shrink-0">
+                        <input type="text" id="asphaltType" placeholder="ชนิดยาง เช่น AC 60/70" class="flex-1 min-w-[200px] border border-orange-300 rounded px-3 py-1.5 text-sm bg-white focus:border-orange-500 shadow-sm">
+                        <input type="text" id="tipcoPrice" placeholder="ราคา (บาท/ตัน)" class="w-32 border border-orange-300 rounded px-3 py-1.5 text-sm font-bold text-orange-700 bg-white focus:border-orange-500 shadow-sm text-right" onfocus="this.select()" onblur="if(!isNaN(parseFloat(this.value.replace(/,/g,'')))){ this.value = parseFloat(this.value.replace(/,/g,'')).toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }">
+                        <button onclick="window.addTipcoToTable()" class="bg-green-500 hover:bg-green-600 text-white rounded px-4 py-1.5 text-sm font-bold shadow-sm transition"><i class="fa-solid fa-plus mr-1"></i> เพิ่มลงตารางยาง</button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto border border-orange-300 rounded-lg bg-white relative min-h-[150px]">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="bg-orange-100 text-orange-900 border-b-2 border-orange-300 sticky top-0 z-10 shadow-sm">
+                                <tr><th class="p-2 border-r font-bold">ชนิดยาง / อ้างอิง</th><th class="p-2 border-r w-[25%] text-right font-bold">ราคา (บาท)</th><th class="p-2 border-r w-[15%] text-center font-bold">หน่วย</th><th class="p-2 w-[15%] text-center font-bold">ลบ</th></tr>
+                            </thead>
+                            <tbody class="thai-number divide-y divide-orange-100" id="tipcoTableBody">
+                                <tr><td colspan="4" class="p-6 text-center text-orange-400 italic">ตารางอ้างอิงราคายางว่างเปล่า</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
-            <div class="flex justify-end border-t mt-4 pt-4 shrink-0"><button onclick="window.closeMaterialPriceModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded">ปิดหน้าต่าง</button></div>
+            
+            <div class="flex justify-between items-center border-t mt-4 pt-4 shrink-0 gap-3">
+                <button onclick="window.openMaterialFileList()" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded shadow-sm transition"><i class="fa-solid fa-folder-open mr-1"></i> เปิดดูแฟ้มข้อมูลทั้งหมดในระบบคลาวด์</button>
+                <div class="flex gap-2">
+                    <button onclick="window.closeMaterialPriceModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded">ปิดหน้าต่าง</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- 🌟 8. หน้าต่างแฟ้มข้อมูลราคากลางวัสดุ (File Explorer) 🌟 -->
     <div id="materialFileListModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-[100] no-print">
         <div class="bg-white rounded-lg p-6 max-w-2xl w-full shadow-2xl transform transition-all flex flex-col max-h-[85vh]">
-            <div class="flex justify-between items-center mb-4 border-b pb-2 shrink-0"><h3 class="text-lg font-bold text-gray-900"><i class="fa-solid fa-folder-tree text-emerald-600 mr-2"></i>แฟ้มข้อมูลราคากลางวัสดุ (Cloud)</h3><button onclick="window.closeMaterialFileList()" class="text-gray-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button></div>
-            <div class="overflow-y-auto flex-1 pr-2 space-y-2 mb-4" id="materialFileListContainer"></div>
-            <div class="mt-2 pt-4 border-t text-right shrink-0"><button onclick="window.closeMaterialFileList()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded shadow-sm">ปิดหน้าต่าง</button></div>
+            <div class="flex justify-between items-center mb-4 border-b pb-2 shrink-0">
+                <h3 class="text-lg font-bold text-gray-900"><i class="fa-solid fa-folder-tree text-emerald-600 mr-2"></i>แฟ้มข้อมูลราคากลางวัสดุ (Cloud)</h3>
+                <button onclick="window.closeMaterialFileList()" class="text-gray-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="mb-3 shrink-0">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400"></i>
+                    <input type="text" id="searchCloudFiles" placeholder="ค้นหาแฟ้ม (เช่น พิษณุโลก, ทิปโก้, 2566)..." class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-emerald-500 shadow-sm" oninput="window.renderMaterialFileList()">
+                </div>
+            </div>
+            
+            <div class="overflow-y-auto flex-1 pr-2 space-y-4 mb-4" id="materialFileListContainer">
+                <div class="text-center py-8"><i class="fa-solid fa-spinner fa-spin text-emerald-500 text-4xl mb-3"></i><p class="text-gray-500 font-semibold">กำลังค้นหาแฟ้มข้อมูล...</p></div>
+            </div>
+            
+            <div class="mt-2 pt-4 border-t text-right shrink-0">
+                <button onclick="window.closeMaterialFileList()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded shadow-sm">ปิดหน้าต่าง</button>
+            </div>
         </div>
     </div>
 
@@ -502,7 +568,65 @@
         window.myChart = null; window.ecoChart = null; window.indexTrendChart = null; window.materialChart = null;
         window.isPresentationMode = false; window.currentProjectId = null;
         window.cloudProjects = []; window.cloudKIndices = {}; window.savedKValueItems = []; 
-        window.globalNetCostDiff = 0; window.globalKCompensation = null; window.globalMaterialData = []; window.materialDocsCache = null;
+        window.globalMaterialData = []; window.tipcoMaterialData = []; window.cloudMaterialFiles = [];
+        window.globalNetCostDiff = 0; window.globalKCompensation = null;
+
+        // 🌟 ฟังก์ชันจัดการยางทิปโก้ลงตาราง 🌟
+        window.addTipcoToTable = function() {
+            const aType = document.getElementById('asphaltType').value.trim();
+            const tPrice = document.getElementById('tipcoPrice').value.trim();
+            if (!aType) { window.showDialog("⚠️ กรุณาระบุชนิดยาง"); return; }
+            if (!tPrice || tPrice === '0.00') { window.showDialog("⚠️ กรุณาระบุราคายาง"); return; }
+            
+            window.tipcoMaterialData.unshift({
+                id: 'tipco_' + Date.now(),
+                name: aType,
+                price: tPrice.replace(/,/g, ''),
+                unit: 'ตัน'
+            });
+            document.getElementById('asphaltType').value = '';
+            document.getElementById('tipcoPrice').value = '';
+            window.renderTipcoTable();
+            window.showDialog(`✅ เพิ่ม <b>"${aType}"</b> ลงในตารางด้านล่างแล้ว<br><br><span class="text-sm text-gray-500">กรุณากดปุ่ม <b>"บันทึกแฟ้มยาง"</b> สีส้ม เพื่อจัดเก็บตารางทั้งหมดลง Cloud ครับ</span>`);
+        };
+
+        window.updateTipcoRow = function(id, f, el) {
+            const i = window.tipcoMaterialData.find(x => x.id === id);
+            if(i) {
+                i[f] = f==='price' ? window.unformatNumber(el.value) : el.value;
+                if(f==='price') el.value = window.formatNumber(i[f]);
+            }
+        };
+
+        window.deleteTipcoRow = function(id) {
+            window.tipcoMaterialData = window.tipcoMaterialData.filter(i => i.id !== id);
+            window.renderTipcoTable();
+        };
+
+        window.renderTipcoTable = function() {
+            const tb = document.getElementById('tipcoTableBody');
+            if(window.tipcoMaterialData.length === 0){
+                tb.innerHTML='<tr><td colspan="4" class="p-6 text-center text-orange-400 italic">ตารางอ้างอิงราคายางว่างเปล่า</td></tr>';
+                return;
+            }
+            tb.innerHTML='';
+            window.tipcoMaterialData.forEach(i=>{
+                if(!i.id) i.id='tipco_'+Date.now()+'_'+Math.random().toString(36).substring(2,7);
+                const pNum=parseFloat(i.price); 
+                const pDisplay=!isNaN(pNum)?window.formatNumber(pNum):window.escapeHTML(i.price); 
+                const copyText = `${String(i.name).replace(/'/g, "\\'")}\\t${pDisplay}`;
+                tb.innerHTML+=`<tr class="hover:bg-orange-50">
+                    <td class="p-1 border-r border-orange-200"><input type="text" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-sm font-medium" value="${window.escapeHTML(i.name)}" onchange="window.updateTipcoRow('${i.id}','name',this)"></td>
+                    <td class="p-1 border-r border-orange-200"><input type="text" inputmode="decimal" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-right font-bold text-orange-700" value="${pDisplay}" onfocus="this.select()" onchange="window.updateTipcoRow('${i.id}','price',this)"></td>
+                    <td class="p-1 border-r border-orange-200 text-center text-gray-600 text-sm">ตัน</td>
+                    <td class="p-2 text-center flex justify-center gap-1">
+                        <button onclick="window.showMaterialTrend('${window.escapeHTML(i.name).replace(/'/g, "\\'")}')" class="text-orange-500 hover:bg-orange-100 p-1.5 rounded" title="กราฟแนวโน้ม"><i class="fa-solid fa-chart-line"></i></button>
+                        <button onclick="window.copyTextToClipboard('${copyText}')" class="text-blue-500 hover:bg-blue-100 p-1.5 rounded" title="คัดลอก"><i class="fa-solid fa-copy"></i></button>
+                        <button onclick="window.deleteTipcoRow('${i.id}')" class="text-red-400 hover:bg-red-100 p-1.5 rounded" title="ลบ"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>`;
+            });
+        };
 
         window.kFormulasDef = {
             "1.1": { group: "หมวด 1: งานอาคาร", name: "1. งานอาคาร/องค์ประกอบ", formula: { const: 0.25, I: 0.15, C: 0.10, M: 0.40, S: 0.10 } },
@@ -555,7 +679,7 @@
         
         window.showDialog = function(message, isConfirm = false, onConfirm = null) {
             const id = 'dlg_' + Date.now();
-            document.body.insertAdjacentHTML('beforeend', `<div id="${id}" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[100] p-4 transition-opacity"><div class="bg-white rounded-lg p-6 max-w-sm w-full shadow-2xl text-center"><div class="text-gray-800 text-lg mb-6 leading-relaxed whitespace-pre-wrap">${message}</div><div class="flex justify-center gap-3">${isConfirm ? `<button id="btnC_${id}" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-6 rounded-lg transition">ยกเลิก</button>` : ''}<button id="btnO_${id}" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded-lg transition shadow-md">ตกลง</button></div></div></div>`);
+            document.body.insertAdjacentHTML('beforeend', `<div id="${id}" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[120] p-4 transition-opacity"><div class="bg-white rounded-lg p-6 max-w-sm w-full shadow-2xl text-center"><div class="text-gray-800 text-lg mb-6 leading-relaxed whitespace-pre-wrap">${message}</div><div class="flex justify-center gap-3">${isConfirm ? `<button id="btnC_${id}" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-6 rounded-lg transition">ยกเลิก</button>` : ''}<button id="btnO_${id}" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded-lg transition shadow-md">ตกลง</button></div></div></div>`);
             document.getElementById(`btnO_${id}`).onclick = function() { document.getElementById(id).remove(); if(onConfirm) onConfirm(true); };
             if(isConfirm) document.getElementById(`btnC_${id}`).onclick = function() { document.getElementById(id).remove(); if(onConfirm) onConfirm(false); };
         };
@@ -592,6 +716,66 @@
             window.loadKIndexForEdit();
         };
         window.closeKIndexAdminModal = function() { document.getElementById('kIndexAdminModal').classList.add('hidden'); };
+        
+        window.handleSmartPaste = function(e) {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            if (!text) return;
+            
+            // ลบลูกน้ำออกและจัดช่องว่างให้เป็นบรรทัดเดียวเพื่อง่ายต่อการค้นหา
+            const cleanText = text.replace(/,/g, '').replace(/\s+/g, ' ');
+            
+            // ชุดคำค้นหา (Regex) อิงตามคำศัพท์ที่กระทรวงพาณิชย์ใช้ใน PDF
+            const mappings = [
+                { k: 'I', regex: /(?:ผู้บริโภค|CPI).*?(\d{2,3}\.\d)/i },
+                { k: 'M', regex: /วัสดุก่อสร้าง(?:.*?ไม่รวมเหล็ก)?.*?(\d{2,3}\.\d)/i },
+                { k: 'A', regex: /(?:แอสฟัลท์|แอสฟัลต์|ยางมะตอย).*?(\d{2,3}\.\d)/i },
+                { k: 'S', regex: /เหล็ก(?:และผลิตภัณฑ์เหล็ก)?.*?(\d{2,3}\.\d)/i },
+                { k: 'E', regex: /เครื่องจักรกล.*?(\d{2,3}\.\d)/i },
+                { k: 'C', regex: /ซีเมนต์.*?(\d{2,3}\.\d)/i },
+                { k: 'GIP', regex: /(?:ท่อเหล็กอาบสังกะสี|ท่อเหล็กเคลือบสังกะสี|GIP).*?(\d{2,3}\.\d)/i },
+                { k: 'G', regex: /เหล็กแผ่นเรียบ.*?(\d{2,3}\.\d)/i },
+                { k: 'AC', regex: /(?:ท่อซีเมนต์ใยหิน|ใยหิน).*?(\d{2,3}\.\d)/i },
+                { k: 'PVC', regex: /(?:ท่อพีวีซี|PVC).*?(\d{2,3}\.\d)/i },
+                { k: 'F', regex: /(?:ดีเซล|โซล่า|เชื้อเพลิง).*?(\d{2,3}\.\d)/i },
+                { k: 'W', regex: /สายไฟ.*?(\d{2,3}\.\d)/i },
+                { k: 'PE', regex: /(?:ท่อโพลีเอทิลีน|ท่อพีอี|HDPE|PE).*?(\d{2,3}\.\d)/i }
+            ];
+
+            let count = 0;
+            mappings.forEach(m => {
+                const match = cleanText.match(m.regex);
+                if (match && match[1]) {
+                    const inputEl = document.getElementById(`adminIdx_${m.k}`);
+                    if (inputEl) {
+                        inputEl.value = parseFloat(match[1]).toFixed(1);
+                        inputEl.style.transition = 'all 0.3s';
+                        inputEl.style.backgroundColor = '#dcfce7'; 
+                        inputEl.style.borderColor = '#10b981';
+                        setTimeout(() => {
+                            inputEl.style.backgroundColor = '';
+                            inputEl.style.borderColor = '';
+                        }, 2500);
+                        count++;
+                    }
+                }
+            });
+
+            if (count > 0) {
+                window.showDialog(`✅ ดึงข้อมูลอัจฉริยะสำเร็จ <b>${count}</b> หมวดหมู่<br><span class="text-sm text-gray-500">กรุณาตรวจสอบความถูกต้องของตัวเลขอีกครั้งก่อนกดบันทึก</span>`);
+            } else {
+                const nums = cleanText.match(/\b\d{2,3}\.\d\b/g);
+                if (nums && nums.length > 0) {
+                    document.getElementById('smartPasteInput').value = text;
+                    window.showDialog("⚠️ <b>ไม่พบชื่อหมวดหมู่ที่รู้จัก</b> แต่พบชุดตัวเลข<br><br><span class='text-sm text-gray-600 text-left block'>กรุณากรอกด้วยตนเอง หรือคัดลอกข้อความให้ <u>ติดชื่อดัชนี</u> มาด้วยครับ<br>ตัวอย่างที่ถูกต้อง: <i>'ดัชนีราคาผู้บริโภคทั่วไป 105.4'</i></span>");
+                    return;
+                } else {
+                    window.showDialog("❌ ไม่พบข้อมูลดัชนี หรือรูปแบบข้อความไม่ถูกต้อง");
+                }
+            }
+            e.target.value = ''; // เคลียร์ช่องรับข้อมูลเสมอหลังจากประมวลผลเสร็จ
+        };
+
         window.openKIndexTableModal = function() {
             document.getElementById('kIndexTableModal').classList.remove('hidden');
             const tb = document.getElementById('kIndexTableBody'); tb.innerHTML='';
@@ -613,11 +797,73 @@
         window.openMaterialPriceModal = function() { document.getElementById('materialPriceModal').classList.remove('hidden'); const t = new Date(); document.getElementById('matDbMonth').value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`; window.loadMaterialFromCloud(); };
         window.closeMaterialPriceModal = function() { document.getElementById('materialPriceModal').classList.add('hidden'); };
         
-        // --- ส่วนที่แก้ไขปัญหา ปุ่มเปิดแฟ้ม ไม่โชว์แจ้งเตือนในตอนแรก ---
         window.openMaterialFileList = async function() { 
             window.showDialog("ระบบคลาวด์ยังไม่ได้เชื่อมต่อ (ทำงานแบบ Offline)"); 
         };
         window.closeMaterialFileList = function() { document.getElementById('materialFileListModal').classList.add('hidden'); };
+        
+        // 🌟 เพิ่มฟังก์ชันสำหรับ Search และแยกแสดงหมวดหมู่ไฟล์ Cloud 🌟
+        window.renderMaterialFileList = function() {
+            const c = document.getElementById('materialFileListContainer');
+            const searchTerm = (document.getElementById('searchCloudFiles')?.value || '').toLowerCase();
+
+            if(!window.cloudMaterialFiles || window.cloudMaterialFiles.length === 0) {
+                c.innerHTML = '<div class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">ยังไม่มีแฟ้มข้อมูลวัสดุก่อสร้างในระบบคลาวด์</div>';
+                return;
+            }
+
+            let filtered = window.cloudMaterialFiles.filter(f => {
+                const title = f.prov === 'ราคายางทิปโก้' ? `ราคายางทิปโก้ ${window.formatThaiMonth(f.m)}` : `จ.${f.prov} ${window.formatThaiMonth(f.m)}`;
+                return title.toLowerCase().includes(searchTerm) || (f.aType && f.aType.toLowerCase().includes(searchTerm));
+            });
+
+            const provFiles = filtered.filter(f => f.prov !== 'ราคายางทิปโก้');
+            const tipcoFiles = filtered.filter(f => f.prov === 'ราคายางทิปโก้');
+
+            let html = '';
+
+            if (provFiles.length > 0) {
+                html += `<h4 class="font-bold text-teal-800 border-b border-teal-200 pb-1 mb-3 mt-2"><i class="fa-solid fa-map-location-dot mr-2"></i>หมวดวัสดุระดับจังหวัด (${provFiles.length} แฟ้ม)</h4>`;
+                provFiles.forEach(f => {
+                    html += `<div class="flex justify-between items-center p-4 border border-teal-200 bg-white rounded-lg hover:bg-teal-50 cursor-pointer mb-3 shadow-sm transition" onclick="window.selectMaterialFile('${f.prov}', '${f.m}', '${f.id}')">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center"><i class="fa-solid fa-file-lines text-xl"></i></div>
+                            <div>
+                                <div class="font-bold text-gray-800 text-lg">จ.${f.prov} - ${window.formatThaiMonth(f.m)}</div>
+                                <div class="text-sm text-gray-500 mt-1"><i class="fa-solid fa-boxes-stacked mr-1"></i> ${window.formatNumber(f.cnt)} รายการ <span class="mx-1 text-gray-300">|</span> <i class="fa-regular fa-clock mr-1"></i> ${f.dt}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <button onclick="event.stopPropagation(); window.deleteMaterialFile('${f.m}', '${f.prov}', '${f.id}')" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-lg transition" title="ลบแฟ้มนี้"><i class="fa-solid fa-trash-can text-lg"></i></button>
+                        </div>
+                    </div>`;
+                });
+            }
+
+            if (tipcoFiles.length > 0) {
+                html += `<h4 class="font-bold text-orange-800 border-b border-orange-200 pb-1 mb-3 ${provFiles.length > 0 ? 'mt-6' : 'mt-2'}"><i class="fa-solid fa-road mr-2"></i>หมวดราคายางทิปโก้ (${tipcoFiles.length} แฟ้ม)</h4>`;
+                tipcoFiles.forEach(f => {
+                    html += `<div class="flex justify-between items-center p-4 border border-orange-200 bg-white rounded-lg hover:bg-orange-50 cursor-pointer mb-3 shadow-sm transition" onclick="window.selectMaterialFile('${f.prov}', '${f.m}', '${f.id}')">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center"><i class="fa-solid fa-truck-moving text-xl"></i></div>
+                            <div>
+                                <div class="font-bold text-gray-800 text-lg">ราคายางทิปโก้ - ${window.formatThaiMonth(f.m)}</div>
+                                <div class="text-sm text-gray-500 mt-1"><i class="fa-solid fa-table mr-1"></i> ชนิดยางในตาราง: ${window.formatNumber(f.cnt)} รายการ <span class="mx-1 text-gray-300">|</span> <i class="fa-regular fa-clock mr-1"></i> ${f.dt}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <button onclick="event.stopPropagation(); window.deleteMaterialFile('${f.m}', '${f.prov}', '${f.id}')" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-lg transition" title="ลบแฟ้มนี้"><i class="fa-solid fa-trash-can text-lg"></i></button>
+                        </div>
+                    </div>`;
+                });
+            }
+
+            if(filtered.length === 0) {
+                html = '<div class="text-center py-8 text-gray-500 italic"><i class="fa-solid fa-magnifying-glass text-3xl mb-2 text-gray-300 block"></i>ไม่พบแฟ้มที่ค้นหา</div>';
+            }
+
+            c.innerHTML = html;
+        };
         
         window.togglePresentation = function() { window.isPresentationMode = !window.isPresentationMode; if(window.isPresentationMode) document.body.classList.add('presentation-mode'); else document.body.classList.remove('presentation-mode'); if (window.myChart) window.myChart.resize(); };
 
@@ -744,10 +990,10 @@
             document.getElementById('kTotalCalculatedWork').innerHTML = `${window.formatNumber(tWork)} <span class="text-sm font-normal text-gray-400">บาท</span>`; document.getElementById('kTotalItemsMatched').innerText = uCnt; 
             
             const cEl = document.getElementById('kCompensation'); const bEl = document.getElementById('kActionBadge'); const dEl = document.getElementById('kActionDesc'); const iEl = document.getElementById('summaryIcon'); const cdEl = document.getElementById('summaryContainerCard');
-            if(uCnt===0) { cEl.innerHTML=`0.00 <span class="text-xl font-bold">บาท</span>`; cEl.className="text-4xl font-black thai-number my-3 text-gray-400"; bEl.innerText="- รอข้อมูล -"; bEl.className="mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold bg-gray-100 text-gray-600"; dEl.innerText="กรุณาเลือกสูตรอ้างอิงให้ครบ"; cdEl.className="bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-gray-500"; }
-            else if(tComp>0) { cEl.innerHTML=`+${window.formatNumber(tComp)} <span class="text-xl font-bold text-emerald-700">บาท</span>`; cEl.className="text-4xl font-black thai-number my-3 text-emerald-600"; bEl.innerHTML=`<i class="fa-solid fa-hand-holding-dollar"></i> ผู้รับจ้างมีสิทธิ์ขอรับชดเชย`; bEl.className="mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold bg-emerald-100 text-emerald-800"; dEl.innerText="รัฐต้องจ่ายเงินชดเชยเพิ่มให้แก่ผู้รับจ้าง"; cdEl.className="bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-emerald-500"; }
-            else if(tComp<0) { cEl.innerHTML=`-${window.formatNumber(Math.abs(tComp))} <span class="text-xl font-bold text-red-700">บาท</span>`; cEl.className="text-4xl font-black thai-number my-3 text-red-600"; bEl.innerHTML=`<i class="fa-solid fa-money-bill-transfer"></i> รัฐต้องเรียกเงินคืน`; bEl.className="mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold bg-red-100 text-red-800"; dEl.innerText="รัฐต้องหักเงินค่างานคืนจากผู้รับจ้าง"; cdEl.className="bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-red-500"; }
-            else { cEl.innerHTML=`0.00 <span class="text-xl font-bold text-gray-500">บาท</span>`; cEl.className="text-4xl font-black thai-number my-3 text-gray-800"; bEl.innerHTML=`<i class="fa-solid fa-scale-balanced"></i> 4% (ไม่ชดเชย)`; bEl.className="mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold bg-gray-100 text-gray-800"; dEl.innerText="ผันผวนไม่เกินร้อยละ 4"; cdEl.className="bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-gray-400"; }
+            if(uCnt===0) { cEl.innerHTML=`0.00 <span class="text-xl font-bold">บาท</span>`; cEl.className="text-4xl font-black thai-number my-3 text-gray-400"; if(bEl) bEl.innerText="- รอข้อมูล -"; if(bEl) bEl.className="mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold bg-gray-100 text-gray-600"; if(dEl) dEl.innerText="กรุณาเลือกสูตรอ้างอิงให้ครบ"; cdEl.className="bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-gray-500"; }
+            else if(tComp>0) { cEl.innerHTML=`+${window.formatNumber(tComp)} <span class="text-xl font-bold text-emerald-700">บาท</span>`; cEl.className="text-4xl font-black thai-number my-3 text-emerald-600"; if(bEl) bEl.innerHTML=`<i class="fa-solid fa-hand-holding-dollar"></i> ผู้รับจ้างมีสิทธิ์ขอรับชดเชย`; if(bEl) bEl.className="mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold bg-emerald-100 text-emerald-800"; if(dEl) dEl.innerText="รัฐต้องจ่ายเงินชดเชยเพิ่มให้แก่ผู้รับจ้าง"; cdEl.className="bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-emerald-500"; }
+            else if(tComp<0) { cEl.innerHTML=`-${window.formatNumber(Math.abs(tComp))} <span class="text-xl font-bold text-red-700">บาท</span>`; cEl.className="text-4xl font-black thai-number my-3 text-red-600"; if(bEl) bEl.innerHTML=`<i class="fa-solid fa-money-bill-transfer"></i> รัฐต้องเรียกเงินคืน`; if(bEl) bEl.className="mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold bg-red-100 text-red-800"; if(dEl) dEl.innerText="รัฐต้องหักเงินค่างานคืนจากผู้รับจ้าง"; cdEl.className="bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-red-500"; }
+            else { cEl.innerHTML=`0.00 <span class="text-xl font-bold text-gray-500">บาท</span>`; cEl.className="text-4xl font-black thai-number my-3 text-gray-800"; if(bEl) bEl.innerHTML=`<i class="fa-solid fa-scale-balanced"></i> 4% (ไม่ชดเชย)`; if(bEl) bEl.className="mt-2 inline-block px-5 py-2 rounded-full text-sm font-bold bg-gray-100 text-gray-800"; if(dEl) dEl.innerText="ผันผวนไม่เกินร้อยละ 4"; cdEl.className="bg-gray-800 p-5 rounded-xl shadow-xl text-white border-t-4 border-gray-400"; }
 
             window.globalKCompensation = tComp; window.renderMainEcoAnalysis();
         };
@@ -865,13 +1111,13 @@
         window.deleteMaterialRow = function(id) { window.globalMaterialData=window.globalMaterialData.filter(i=>i.id!==id); window.renderMaterialTable(); };
         window.renderMaterialTable = function(f='') {
             const tb=document.getElementById('materialTableBody');
-            if(window.globalMaterialData.length===0){ tb.innerHTML='<tr><td colspan="5" class="p-12 text-center text-gray-500 italic"><i class="fa-solid fa-cloud-arrow-down text-4xl mb-3 text-gray-300 block"></i>กรุณาเลือกจังหวัดและเดือน แล้วกดโหลด หรือเพิ่มข้อมูล</td></tr>'; document.getElementById('materialCount').innerText='จำนวน: 0 รายการ'; return; }
+            if(window.globalMaterialData.length===0){ tb.innerHTML='<tr><td colspan="5" class="p-12 text-center text-teal-600 italic"><i class="fa-solid fa-cloud-arrow-down text-4xl mb-3 text-teal-300 block"></i>กรุณาเลือกจังหวัดและเดือน แล้วกด "โหลด" เพื่อดึงข้อมูล</td></tr>'; document.getElementById('materialCount').innerText='จำนวน: 0 รายการ'; return; }
             let d=window.globalMaterialData; if(f) d=d.filter(i=>String(i.name).toLowerCase().includes(f.toLowerCase())||String(i.code).toLowerCase().includes(f.toLowerCase()));
             tb.innerHTML='';
             d.slice(0,100).forEach(i=>{
                 if(!i.id) i.id='mat_'+Date.now()+'_'+Math.random().toString(36).substring(2,7);
                 const pNum=parseFloat(i.price); const pDisplay=!isNaN(pNum)?window.formatNumber(pNum):window.escapeHTML(i.price); const copyName = String(i.name).replace(/'/g, "\\'"); const copyText = `${copyName}\\t${pDisplay}`;
-                tb.innerHTML+=`<tr class="hover:bg-emerald-50"><td class="p-1 border-r border-gray-200"><input type="text" class="w-full bg-transparent border-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-xs text-center" value="${window.escapeHTML(i.code||'')}" onchange="window.updateMaterialRow('${i.id}','code',this)"></td><td class="p-1 border-r border-gray-200"><input type="text" class="w-full bg-transparent border-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-sm font-medium" value="${window.escapeHTML(i.name)}" onchange="window.updateMaterialRow('${i.id}','name',this)"></td><td class="p-1 border-r border-gray-200"><input type="text" inputmode="decimal" class="w-full bg-transparent border-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-right font-bold text-emerald-700" value="${pDisplay}" onfocus="this.select()" onchange="window.updateMaterialRow('${i.id}','price',this)"></td><td class="p-1 border-r border-gray-200"><input type="text" class="w-full bg-transparent border-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-xs text-center" value="${window.escapeHTML(i.unit||'')}" onchange="window.updateMaterialRow('${i.id}','unit',this)"></td><td class="p-2 text-center flex justify-center gap-1"><button onclick="window.showMaterialTrend('${copyName}')" class="text-emerald-500 hover:bg-emerald-100 p-1.5 rounded"><i class="fa-solid fa-chart-line"></i></button><button onclick="window.copyTextToClipboard('${copyText}')" class="text-blue-500 hover:bg-blue-100 p-1.5 rounded"><i class="fa-solid fa-copy"></i></button><button onclick="window.deleteMaterialRow('${i.id}')" class="text-red-400 hover:bg-red-100 p-1.5 rounded"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
+                tb.innerHTML+=`<tr class="hover:bg-teal-50"><td class="p-1 border-r border-teal-200"><input type="text" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-xs text-center" value="${window.escapeHTML(i.code||'')}" onchange="window.updateMaterialRow('${i.id}','code',this)"></td><td class="p-1 border-r border-teal-200"><input type="text" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-sm font-medium" value="${window.escapeHTML(i.name)}" onchange="window.updateMaterialRow('${i.id}','name',this)"></td><td class="p-1 border-r border-teal-200"><input type="text" inputmode="decimal" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-right font-bold text-teal-700" value="${pDisplay}" onfocus="this.select()" onchange="window.updateMaterialRow('${i.id}','price',this)"></td><td class="p-1 border-r border-teal-200"><input type="text" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-xs text-center" value="${window.escapeHTML(i.unit||'')}" onchange="window.updateMaterialRow('${i.id}','unit',this)"></td><td class="p-2 text-center flex justify-center gap-1"><button onclick="window.showMaterialTrend('${copyName}')" class="text-teal-500 hover:bg-teal-100 p-1.5 rounded" title="กราฟเปรียบเทียบ"><i class="fa-solid fa-chart-line"></i></button><button onclick="window.copyTextToClipboard('${copyText}')" class="text-blue-500 hover:bg-blue-100 p-1.5 rounded" title="คัดลอก"><i class="fa-solid fa-copy"></i></button><button onclick="window.deleteMaterialRow('${i.id}')" class="text-red-400 hover:bg-red-100 p-1.5 rounded" title="ลบ"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
             });
             document.getElementById('materialCount').innerText=`พบ: ${window.formatNumber(d.length)} รายการ`;
         };
@@ -887,6 +1133,9 @@
         window.openMaterialFileList = window.openMaterialFileList || async function() { window.showDialog("ระบบคลาวด์ปิดกั้นการเข้าถึง (ทำงานแบบ Offline)"); };
         window.loadMaterialFromCloud = window.loadMaterialFromCloud || async function() { window.showDialog("ระบบคลาวด์ปิดกั้นการเข้าถึง"); };
         window.saveMaterialToCloud = window.saveMaterialToCloud || async function() { window.showDialog("ระบบคลาวด์ปิดกั้นการเข้าถึง"); };
+        window.saveTipcoToCloud = window.saveTipcoToCloud || async function() { window.showDialog("ระบบคลาวด์ปิดกั้นการเข้าถึง"); };
+        window.loadTipcoFromCloud = window.loadTipcoFromCloud || async function() { window.showDialog("ระบบคลาวด์ปิดกั้นการเข้าถึง"); };
+        window.loadTipcoFromCloudByMonth = window.loadTipcoFromCloudByMonth || async function() { window.showDialog("ระบบคลาวด์ปิดกั้นการเข้าถึง"); };
         window.deleteMaterialFile = window.deleteMaterialFile || async function() { window.showDialog("ระบบคลาวด์ปิดกั้นการเข้าถึง"); };
         window.showMaterialTrend = window.showMaterialTrend || async function() { window.showDialog("ระบบคลาวด์ปิดกั้นการเข้าถึง"); };
         window.renderMasterSummary = window.renderMasterSummary || function() { document.getElementById('masterSummaryBody').innerHTML = '<tr><td colspan="8" class="text-center py-4">ออฟไลน์</td></tr>'; };
@@ -949,6 +1198,17 @@
                             if(!document.getElementById('kValueModal').classList.contains('hidden')) window.updateKIndices();
                             if(!document.getElementById('kIndexTableModal').classList.contains('hidden')) window.openKIndexTableModal();
                         });
+                        fbFs.onSnapshot(fbFs.collection(db, 'artifacts', appId, 'public', 'data', 'material_prices'), (snap) => {
+                            window.cloudMaterialFiles = [];
+                            snap.forEach(d => {
+                                const dt = d.data();
+                                window.cloudMaterialFiles.push({ id: d.id, prov: dt.province, m: dt.month, dt: dt.updatedAt, cnt: (dt.items||[]).length, aType: dt.asphaltType, tPrice: dt.tipcoPrice });
+                            });
+                            window.cloudMaterialFiles.sort((a,b) => b.m.localeCompare(a.m));
+                            if(!document.getElementById('materialFileListModal').classList.contains('hidden')) {
+                                window.renderMaterialFileList();
+                            }
+                        });
                     }
                 });
 
@@ -973,71 +1233,76 @@
 
                 // --- Material DB Cloud Overrides ---
                 window.openMaterialFileList = async function() {
-                    document.getElementById('materialFileListModal').classList.remove('hidden'); 
-                    const c = document.getElementById('materialFileListContainer'); 
-                    c.innerHTML = '<div class="text-center py-8"><i class="fa-solid fa-spinner fa-spin text-emerald-500 text-4xl mb-3"></i><p class="text-gray-500 font-semibold">กำลังค้นหาแฟ้มข้อมูล...</p></div>';
+                    document.getElementById('materialFileListModal').classList.remove('hidden');
+                    document.getElementById('searchCloudFiles').value = '';
+                    window.renderMaterialFileList();
+                };
+
+                window.selectMaterialFile = function(p, m, docId) { 
+                    if(p === 'ราคายางทิปโก้') {
+                        window.loadTipcoFromCloud(docId || `tipco_${m}`);
+                    } else {
+                        document.getElementById('matDbProvince').value=p; 
+                        document.getElementById('matDbMonth').value=m; 
+                        window.loadMaterialFromCloud(); 
+                    }
+                    window.closeMaterialFileList(); 
+                };
+                
+                window.loadTipcoFromCloudByMonth = function() {
+                    const m = document.getElementById('tipcoMonth') ? document.getElementById('tipcoMonth').value : '';
+                    if(!m) { window.showDialog("⚠️ กรุณาระบุ <b>ประจำเดือน (แฟ้มยาง)</b> ที่ต้องการโหลด"); return; }
+                    window.loadTipcoFromCloud(`tipco_${m}`);
+                };
+
+                window.loadTipcoFromCloud = async function(docId) {
                     try {
-                        const qs = await fbFs.getDocs(fbFs.collection(db, 'artifacts', appId, 'public', 'data', 'material_prices')); 
-                        const files = []; 
-                        qs.forEach(d => { 
-                            const dt = d.data(); 
-                            files.push({ id: d.id, prov: dt.province, m: dt.month, dt: dt.updatedAt, cnt: (dt.items||[]).length }); 
-                        });
-                        files.sort((a,b) => b.m.localeCompare(a.m)); 
-                        
-                        if(files.length === 0) {
-                            c.innerHTML = '<div class="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">ยังไม่มีแฟ้มข้อมูลวัสดุก่อสร้างในระบบคลาวด์</div>';
-                            return;
+                        const tb = document.getElementById('tipcoTableBody');
+                        tb.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-orange-600"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><br>กำลังโหลด...</td></tr>';
+
+                        const s = await fbFs.getDoc(fbFs.doc(db, 'artifacts', appId, 'public', 'data', 'material_prices', docId));
+                        if(s.exists()) {
+                            const data = s.data();
+                            const elM = document.getElementById('tipcoMonth');
+                            
+                            if(elM) { elM.value = data.month || ''; elM.style.backgroundColor = '#fef08a'; setTimeout(()=>elM.style.backgroundColor='', 1500); }
+                            
+                            window.tipcoMaterialData = data.items || [];
+                            
+                            window.showDialog(`✅ โหลดข้อมูล <b>ราคายางทิปโก้ เดือน ${window.formatThaiMonth(data.month)}</b> สำเร็จ!<br><br><span class="text-sm text-gray-600">โหลดพร้อมตารางข้อมูล ${window.formatNumber(window.tipcoMaterialData.length)} รายการ</span>`);
+                        } else {
+                            window.tipcoMaterialData = [];
+                            window.showDialog("❌ ไม่พบข้อมูลแฟ้มราคายางนี้ในระบบ");
                         }
-                        
-                        c.innerHTML = '';
-                        files.forEach(f => { 
-                            c.innerHTML += `<div class="flex justify-between items-center p-4 border border-gray-200 rounded-lg hover:bg-emerald-50 cursor-pointer mb-3 shadow-sm transition" onclick="window.selectMaterialFile('${f.prov}', '${f.m}')">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center"><i class="fa-solid fa-file-lines text-xl"></i></div>
-                                    <div>
-                                        <div class="font-bold text-emerald-800 text-lg">จ.${f.prov} - ${window.formatThaiMonth(f.m)}</div>
-                                        <div class="text-sm text-gray-500 mt-1"><i class="fa-solid fa-boxes-stacked mr-1"></i> ${window.formatNumber(f.cnt)} รายการ <span class="mx-1">|</span> <i class="fa-regular fa-clock mr-1"></i> ${f.dt}</div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <button onclick="event.stopPropagation(); window.deleteMaterialFile('${f.m}', '${f.prov}')" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2.5 rounded-lg transition" title="ลบแฟ้มนี้"><i class="fa-solid fa-trash-can text-lg"></i></button>
-                                </div>
-                            </div>`; 
-                        });
-                    } catch(e) { 
-                        c.innerHTML = '<div class="text-center py-8 text-red-500 font-bold"><i class="fa-solid fa-circle-exclamation text-3xl mb-2"></i><br>โหลดข้อมูลไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต</div>'; 
+                        window.renderTipcoTable();
+                    } catch(e) {
+                        window.tipcoMaterialData = [];
+                        window.renderTipcoTable();
+                        window.showDialog("❌ เกิดข้อผิดพลาด: " + e.message);
                     }
                 };
 
-                window.selectMaterialFile = function(p, m) { document.getElementById('matDbProvince').value=p; document.getElementById('matDbMonth').value=m; window.closeMaterialFileList(); window.loadMaterialFromCloud(); };
-                
                 window.loadMaterialFromCloud = async function() { 
                     const p = document.getElementById('matDbProvince').value; 
                     const m = document.getElementById('matDbMonth').value; 
                     if(!p||!m) { window.showDialog("กรุณาเลือกจังหวัดและเดือนก่อนครับ"); return; }
                     
                     const tb = document.getElementById('materialTableBody');
-                    tb.innerHTML = '<tr><td colspan="5" class="p-12 text-center text-emerald-600"><i class="fa-solid fa-spinner fa-spin text-4xl mb-3"></i><br><span class="font-bold">กำลังโหลดข้อมูล...</span></td></tr>';
+                    tb.innerHTML = '<tr><td colspan="5" class="p-12 text-center text-teal-600"><i class="fa-solid fa-spinner fa-spin text-4xl mb-3"></i><br><span class="font-bold">กำลังโหลดข้อมูล...</span></td></tr>';
                     
                     try{ 
                         const s = await fbFs.getDoc(fbFs.doc(db,'artifacts',appId,'public','data','material_prices',`${p}_${m}`)); 
                         if(s.exists()){
                             const data = s.data();
                             window.globalMaterialData = data.items || []; 
-                            if(document.getElementById('tipcoPrice')) {
-                                document.getElementById('tipcoPrice').value = data.tipcoPrice || '0.00';
-                            }
                             window.showDialog(`✅ โหลดข้อมูล <b>จ.${p} เดือน ${window.formatThaiMonth(m)}</b> สำเร็จ! <br><span class="text-sm text-gray-500">พบข้อมูล ${window.formatNumber(window.globalMaterialData.length)} รายการ</span>`);
                         } else {
                             window.globalMaterialData = []; 
-                            if(document.getElementById('tipcoPrice')) document.getElementById('tipcoPrice').value = '0.00';
                             window.showDialog(`❌ ไม่พบข้อมูล <b>จ.${p} เดือน ${window.formatThaiMonth(m)}</b> ในระบบ`);
                         }
                         window.renderMaterialTable(); 
                     }catch(e){
                         window.globalMaterialData = []; 
-                        if(document.getElementById('tipcoPrice')) document.getElementById('tipcoPrice').value = '0.00';
                         window.renderMaterialTable();
                         window.showDialog(`❌ เกิดข้อผิดพลาดในการโหลดข้อมูล: ${e.message}`);
                     } 
@@ -1046,7 +1311,6 @@
                 window.saveMaterialToCloud = async function() { 
                     const p = document.getElementById('matDbProvince').value; 
                     const m = document.getElementById('matDbMonth').value; 
-                    const tPrice = document.getElementById('tipcoPrice') ? document.getElementById('tipcoPrice').value : '0.00';
                     if(!p||!m||!db||window.globalMaterialData.length===0) return; 
                     try{ 
                         await fbFs.setDoc(fbFs.doc(db,'artifacts',appId,'public','data','material_prices',`${p}_${m}`),{ 
@@ -1054,8 +1318,7 @@
                             month: m, 
                             updatedAt: new Date().toLocaleString('th-TH'), 
                             updatedBy: currentUser.uid, 
-                            items: window.globalMaterialData,
-                            tipcoPrice: tPrice
+                            items: window.globalMaterialData
                         }); 
                         window.materialDocsCache=null; 
                         window.showDialog(`✅ บันทึกแฟ้มราคา <b>จ.${p} เดือน ${window.formatThaiMonth(m)}</b> ขึ้น Cloud สำเร็จ!`); 
@@ -1064,19 +1327,131 @@
                     } 
                 };
 
-                window.deleteMaterialFile = async function(m, p) { window.showDialog(`⚠️ ยืนยันการลบแฟ้มวัสดุ <b>จ.${p} เดือน ${window.formatThaiMonth(m)}</b> อย่างถาวร?`, true, async (c) => { if(c && db) { try { await fbFs.deleteDoc(fbFs.doc(db,'artifacts',appId,'public','data','material_prices',`${p}_${m}`)); window.showDialog("✅ ลบแฟ้มสำเร็จ"); window.openMaterialFileList(); } catch(e) { window.showDialog("❌ ลบไม่สำเร็จ: " + e.message); } } }); };
+                window.saveTipcoToCloud = async function() {
+                    const m = document.getElementById('tipcoMonth') ? document.getElementById('tipcoMonth').value : '';
+                    
+                    if(!m) { window.showDialog("⚠️ กรุณาระบุ <b>ประจำเดือน (แฟ้มยาง)</b> ก่อนบันทึก"); return; }
+                    if(window.tipcoMaterialData.length === 0) { window.showDialog("⚠️ ตารางยางว่างเปล่า กรุณาเพิ่มข้อมูลลงตารางยางก่อนบันทึกครับ"); return; }
+                    if(!db) return;
+                    
+                    try {
+                        await fbFs.setDoc(fbFs.doc(db,'artifacts',appId,'public','data','material_prices',`tipco_${m}`), {
+                            province: 'ราคายางทิปโก้',
+                            month: m,
+                            items: window.tipcoMaterialData,
+                            updatedAt: new Date().toLocaleString('th-TH'),
+                            updatedBy: currentUser.uid
+                        });
+                        window.materialDocsCache=null;
+                        window.showDialog(`✅ บันทึกแฟ้ม <b>ราคายางทิปโก้ เดือน ${window.formatThaiMonth(m)}</b> แยกสำเร็จ!<br><br><span class="text-sm text-gray-500">บันทึกพร้อมตารางข้อมูล ${window.tipcoMaterialData.length} รายการ</span>`);
+                    } catch(e) {
+                        window.showDialog("❌ บันทึกไม่สำเร็จ: " + e.message);
+                    }
+                };
+
+                window.deleteMaterialFile = async function(m, p, docId) { 
+                    let nameDisplay = p === 'ราคายางทิปโก้' ? `ราคายางทิปโก้ เดือน ${window.formatThaiMonth(m)}` : `จ.${p} เดือน ${window.formatThaiMonth(m)}`;
+                    let targetId = docId || `${p}_${m}`;
+                    window.showDialog(`⚠️ ยืนยันการลบแฟ้มวัสดุ <b>${nameDisplay}</b> อย่างถาวร?`, true, async (c) => { 
+                        if(c && db) { 
+                            try { 
+                                await fbFs.deleteDoc(fbFs.doc(db,'artifacts',appId,'public','data','material_prices', targetId)); 
+                                window.showDialog("✅ ลบแฟ้มสำเร็จ"); 
+                                window.renderMaterialFileList(); 
+                            } catch(e) { 
+                                window.showDialog("❌ ลบไม่สำเร็จ: " + e.message); 
+                            } 
+                        } 
+                    }); 
+                };
                 
+                // 🌟 อัปเดตส่วนสร้างกราฟเปรียบเทียบ 🌟
                 window.showMaterialTrend = async function(n) {
-                    document.getElementById('materialChartSection').classList.remove('hidden'); document.getElementById('materialChartTitle').innerHTML = `<i class="fa-solid fa-chart-line text-emerald-600 mr-2"></i>กราฟราคา: <span class="text-emerald-700">${n}</span>`;
+                    document.getElementById('materialChartSection').classList.remove('hidden');
+                    document.getElementById('materialChartTitle').innerHTML = `<i class="fa-solid fa-chart-line text-blue-600 mr-2"></i>กราฟเปรียบเทียบราคา: <span class="text-blue-800">${n}</span>`;
                     const p = document.getElementById('matDbProvince').value;
+                    
                     try {
                         if(window.materialChart) window.materialChart.destroy();
-                        const qs = await fbFs.getDocs(fbFs.collection(db, 'artifacts', appId, 'public', 'data', 'material_prices')); const mD = {};
-                        qs.forEach(doc => { const d = doc.data(); if(d.province === p) { const i = (d.items||[]).find(x => x.name === n); if(i) mD[d.month] = parseFloat(i.price)||0; } });
-                        const ms = Object.keys(mD).sort(); const pts = ms.map(m => mD[m]);
-                        window.materialChart = new Chart(document.getElementById('materialTrendChart').getContext('2d'), { type:'line', data:{labels:ms.map(window.formatThaiMonth),datasets:[{label:`ราคา ${n} (${p})`,data:pts,borderColor:'#059669',backgroundColor:'rgba(5, 150, 105, 0.1)',borderWidth:3,fill:true,tension:0.1,pointRadius:4}]}, options:{responsive:true,maintainAspectRatio:false} });
+                        const qs = await fbFs.getDocs(fbFs.collection(db, 'artifacts', appId, 'public', 'data', 'material_prices'));
+                        
+                        const mDProv = {};
+                        const mDTipco = {};
+                        const allMonths = new Set();
+
+                        qs.forEach(doc => { 
+                            const d = doc.data(); 
+                            const i = (d.items||[]).find(x => x.name === n);
+                            let price = 0;
+                            
+                            if(i) {
+                                price = parseFloat(i.price)||0;
+                            } else if (d.province === 'ราคายางทิปโก้' && d.asphaltType === n) {
+                                price = parseFloat(d.tipcoPrice)||0;
+                            }
+
+                            if (price > 0) {
+                                if (d.province === p) {
+                                    mDProv[d.month] = price;
+                                    allMonths.add(d.month);
+                                } else if (d.province === 'ราคายางทิปโก้') {
+                                    mDTipco[d.month] = price;
+                                    allMonths.add(d.month);
+                                }
+                            }
+                        });
+                        
+                        const ms = Array.from(allMonths).sort(); 
+                        const ptsProv = ms.map(m => mDProv[m] || null);
+                        const ptsTipco = ms.map(m => mDTipco[m] || null);
+                        
+                        const datasets = [];
+                        let hasProv = ptsProv.some(v => v !== null);
+                        let hasTipco = ptsTipco.some(v => v !== null);
+
+                        if (hasProv || !hasTipco) {
+                            datasets.push({
+                                label: `ราคา ${n} (จ.${p})`,
+                                data: ptsProv,
+                                borderColor: '#059669', // เขียว
+                                backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.1,
+                                pointRadius: 4,
+                                spanGaps: true
+                            });
+                        }
+                        if (hasTipco) {
+                            datasets.push({
+                                label: `ราคา ${n} (ทิปโก้)`,
+                                data: ptsTipco,
+                                borderColor: '#ea580c', // ส้ม
+                                backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.1,
+                                pointRadius: 4,
+                                spanGaps: true
+                            });
+                        }
+
+                        window.materialChart = new Chart(document.getElementById('materialTrendChart').getContext('2d'), { 
+                            type:'line', 
+                            data:{
+                                labels: ms.map(window.formatThaiMonth),
+                                datasets: datasets
+                            }, 
+                            options:{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: { mode: 'index', intersect: false }
+                            } 
+                        });
                         document.getElementById('materialChartSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } catch(e) {}
+                    } catch(e) {
+                        console.error(e);
+                    }
                 };
 
                 // --- K-Index Cloud Overrides ---
