@@ -450,10 +450,20 @@
             </div>
             
             <div class="mb-4 bg-white p-4 rounded-lg border border-blue-200 shadow-sm shrink-0 hidden" id="materialChartSection">
-                <div class="flex justify-between items-center mb-3">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-3">
                     <h4 class="font-bold text-gray-800" id="materialChartTitle"><i class="fa-solid fa-chart-line text-blue-600 mr-2"></i>กราฟเปรียบเทียบราคา</h4>
-                    <button onclick="document.getElementById('materialChartSection').classList.add('hidden')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
+                    <div class="flex items-center gap-2 text-sm w-full sm:w-auto">
+                        <span class="font-semibold text-gray-600 whitespace-nowrap"><i class="fa-solid fa-code-compare mr-1"></i> เทียบกับ:</span>
+                        <select id="compareMaterialSelect" class="border border-gray-300 rounded px-2 py-1.5 focus:border-blue-500 flex-1 max-w-[250px]" onchange="window.updateMaterialTrendComparison()">
+                            <option value="">-- ไม่เปรียบเทียบ --</option>
+                        </select>
+                        <button onclick="document.getElementById('materialChartSection').classList.add('hidden')" class="text-gray-400 hover:text-red-500 ml-2 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+                    </div>
                 </div>
+                
+                <!-- กล่องแสดงผลคำนวณเปรียบเทียบเปอร์เซ็นต์ -->
+                <div id="materialCompareSummary" class="hidden mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm"></div>
+
                 <div class="relative h-[250px] w-full"><canvas id="materialTrendChart"></canvas></div>
             </div>
             
@@ -1366,92 +1376,177 @@
                 };
                 
                 // 🌟 อัปเดตส่วนสร้างกราฟเปรียบเทียบ 🌟
+                window.currentTrendMaterial1 = null;
+
                 window.showMaterialTrend = async function(n) {
                     document.getElementById('materialChartSection').classList.remove('hidden');
+                    window.currentTrendMaterial1 = n;
                     document.getElementById('materialChartTitle').innerHTML = `<i class="fa-solid fa-chart-line text-blue-600 mr-2"></i>กราฟเปรียบเทียบราคา: <span class="text-blue-800">${n}</span>`;
                     const p = document.getElementById('matDbProvince').value;
                     
                     try {
-                        if(window.materialChart) window.materialChart.destroy();
                         const qs = await fbFs.getDocs(fbFs.collection(db, 'artifacts', appId, 'public', 'data', 'material_prices'));
-                        
-                        const mDProv = {};
-                        const mDTipco = {};
-                        const allMonths = new Set();
-
+                        const allDocs = [];
+                        const allNames = new Set();
                         qs.forEach(doc => { 
                             const d = doc.data(); 
-                            const i = (d.items||[]).find(x => x.name === n);
-                            let price = 0;
-                            
-                            if(i) {
-                                price = parseFloat(i.price)||0;
-                            } else if (d.province === 'ราคายางทิปโก้' && d.asphaltType === n) {
-                                price = parseFloat(d.tipcoPrice)||0;
-                            }
+                            allDocs.push(d); 
+                            (d.items||[]).forEach(item => allNames.add(item.name));
+                        });
 
-                            if (price > 0) {
-                                if (d.province === p) {
-                                    mDProv[d.month] = price;
-                                    allMonths.add(d.month);
-                                } else if (d.province === 'ราคายางทิปโก้') {
-                                    mDTipco[d.month] = price;
-                                    allMonths.add(d.month);
+                        const select = document.getElementById('compareMaterialSelect');
+                        if (select) {
+                            select.innerHTML = '<option value="">-- ไม่เปรียบเทียบ --</option>';
+                            Array.from(allNames).sort().forEach(name => {
+                                if (name !== n) { 
+                                    select.innerHTML += `<option value="${name}">${name}</option>`;
                                 }
-                            }
-                        });
-                        
-                        const ms = Array.from(allMonths).sort(); 
-                        const ptsProv = ms.map(m => mDProv[m] || null);
-                        const ptsTipco = ms.map(m => mDTipco[m] || null);
-                        
-                        const datasets = [];
-                        let hasProv = ptsProv.some(v => v !== null);
-                        let hasTipco = ptsTipco.some(v => v !== null);
-
-                        if (hasProv || !hasTipco) {
-                            datasets.push({
-                                label: `ราคา ${n} (จ.${p})`,
-                                data: ptsProv,
-                                borderColor: '#059669', // เขียว
-                                backgroundColor: 'rgba(5, 150, 105, 0.1)',
-                                borderWidth: 3,
-                                fill: true,
-                                tension: 0.1,
-                                pointRadius: 4,
-                                spanGaps: true
                             });
                         }
-                        if (hasTipco) {
-                            datasets.push({
-                                label: `ราคา ${n} (ทิปโก้)`,
-                                data: ptsTipco,
-                                borderColor: '#ea580c', // ส้ม
-                                backgroundColor: 'rgba(234, 88, 12, 0.1)',
-                                borderWidth: 3,
-                                fill: true,
-                                tension: 0.1,
-                                pointRadius: 4,
-                                spanGaps: true
-                            });
-                        }
-
-                        window.materialChart = new Chart(document.getElementById('materialTrendChart').getContext('2d'), { 
-                            type:'line', 
-                            data:{
-                                labels: ms.map(window.formatThaiMonth),
-                                datasets: datasets
-                            }, 
-                            options:{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                interaction: { mode: 'index', intersect: false }
-                            } 
-                        });
+                        
+                        window.drawComparisonChart(allDocs, n, '', p);
                         document.getElementById('materialChartSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
                     } catch(e) {
                         console.error(e);
                     }
+                };
+
+                window.updateMaterialTrendComparison = async function() {
+                    const n2 = document.getElementById('compareMaterialSelect').value;
+                    const n1 = window.currentTrendMaterial1;
+                    const p = document.getElementById('matDbProvince').value;
+
+                    try {
+                        const qs = await fbFs.getDocs(fbFs.collection(db, 'artifacts', appId, 'public', 'data', 'material_prices'));
+                        const allDocs = [];
+                        qs.forEach(doc => allDocs.push(doc.data()));
+
+                        window.drawComparisonChart(allDocs, n1, n2, p);
+                    } catch(e) {
+                        console.error(e);
+                    }
+                };
+
+                window.drawComparisonChart = function(allDocs, n1, n2, prov) {
+                    if(window.materialChart) window.materialChart.destroy();
+                    
+                    const mD1_Prov = {}; const mD1_Tipco = {};
+                    const mD2_Prov = {}; const mD2_Tipco = {};
+                    const allMonths = new Set();
+
+                    allDocs.forEach(d => {
+                        if (n1) {
+                            const i1 = (d.items||[]).find(x => x.name === n1);
+                            let price1 = i1 ? parseFloat(i1.price)||0 : 0;
+                            if (price1 > 0) {
+                                allMonths.add(d.month);
+                                if (d.province === prov) mD1_Prov[d.month] = price1;
+                                else if (d.province === 'ราคายางทิปโก้') mD1_Tipco[d.month] = price1;
+                            }
+                        }
+                        if (n2) {
+                            const i2 = (d.items||[]).find(x => x.name === n2);
+                            let price2 = i2 ? parseFloat(i2.price)||0 : 0;
+                            if (price2 > 0) {
+                                allMonths.add(d.month);
+                                if (d.province === prov) mD2_Prov[d.month] = price2;
+                                else if (d.province === 'ราคายางทิปโก้') mD2_Tipco[d.month] = price2;
+                            }
+                        }
+                    });
+
+                    const ms = Array.from(allMonths).sort();
+                    const datasets = [];
+
+                    const addData = (dataMap, label, color, bgColor, dash) => {
+                        const pts = ms.map(m => dataMap[m] || null);
+                        if (pts.some(v => v !== null)) {
+                            datasets.push({
+                                label: label,
+                                data: pts,
+                                borderColor: color,
+                                backgroundColor: bgColor,
+                                borderWidth: 3,
+                                borderDash: dash,
+                                fill: false,
+                                tension: 0.1,
+                                pointRadius: 4,
+                                spanGaps: true
+                            });
+                        }
+                    };
+
+                    addData(mD1_Prov, `${n1} (จ.${prov})`, '#059669', 'rgba(5, 150, 105, 0.1)', []); // Green
+                    addData(mD1_Tipco, `${n1} (ทิปโก้)`, '#ea580c', 'rgba(234, 88, 12, 0.1)', []); // Orange
+
+                    if (n2) {
+                        addData(mD2_Prov, `${n2} (จ.${prov})`, '#2563eb', 'rgba(37, 99, 235, 0.1)', [5, 5]); // Blue
+                        addData(mD2_Tipco, `${n2} (ทิปโก้)`, '#9333ea', 'rgba(147, 51, 234, 0.1)', [5, 5]); // Purple
+                    }
+
+                    // --- เพิ่มการคำนวณเปอร์เซ็นต์ความแตกต่าง ---
+                    const summaryContainer = document.getElementById('materialCompareSummary');
+                    if (summaryContainer) {
+                        if (datasets.length >= 2) {
+                            summaryContainer.classList.remove('hidden');
+                            const d1 = datasets[0];
+                            const d2 = datasets[1];
+                            let matchIdx = -1;
+                            
+                            // หาเดือนล่าสุดที่มีข้อมูลตรงกันทั้งสองฝั่ง
+                            for (let i = ms.length - 1; i >= 0; i--) {
+                                if (d1.data[i] !== null && d2.data[i] !== null) {
+                                    matchIdx = i;
+                                    break;
+                                }
+                            }
+                            
+                            if (matchIdx !== -1) {
+                                const v1 = d1.data[matchIdx];
+                                const v2 = d2.data[matchIdx];
+                                const diff = v2 - v1;
+                                const pct = (Math.abs(diff) / v1) * 100;
+                                
+                                let colorClass = diff > 0 ? 'text-red-600' : (diff < 0 ? 'text-green-600' : 'text-gray-600');
+                                let sign = diff > 0 ? '+' : '';
+                                
+                                summaryContainer.innerHTML = `
+                                    <div class="flex-1">
+                                        <div class="text-xs text-gray-500 font-semibold mb-2"><i class="fa-solid fa-calculator mr-1"></i>วิเคราะห์ส่วนต่างราคาล่าสุด (เดือน ${window.formatThaiMonth(ms[matchIdx])})</div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <div class="bg-white p-2 rounded border shadow-sm">
+                                                <div class="text-[0.7rem] text-gray-500 truncate" title="${d1.label}">${d1.label}</div>
+                                                <div class="font-bold text-gray-800 text-base">${window.formatNumber(v1)} ฿</div>
+                                            </div>
+                                            <div class="bg-white p-2 rounded border shadow-sm">
+                                                <div class="text-[0.7rem] text-gray-500 truncate" title="${d2.label}">${d2.label}</div>
+                                                <div class="font-bold text-gray-800 text-base">${window.formatNumber(v2)} ฿</div>
+                                            </div>
+                                            <div class="bg-white p-2 rounded border shadow-sm">
+                                                <div class="text-[0.7rem] text-gray-500">ส่วนต่าง (เทียบกับ ${d1.label.substring(0,10)}...)</div>
+                                                <div class="font-bold ${colorClass} text-base">${sign}${window.formatNumber(diff)} ฿ <span class="text-xs ml-1">(${sign}${pct.toFixed(2)}%)</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                summaryContainer.innerHTML = '<div class="text-xs text-gray-500 italic"><i class="fa-solid fa-circle-info mr-1"></i>ไม่มีข้อมูลเดือนที่ตรงกันเพื่อคำนวณเปรียบเทียบเปอร์เซ็นต์</div>';
+                            }
+                        } else {
+                            summaryContainer.classList.add('hidden');
+                        }
+                    }
+                    // --- จบการคำนวณ ---
+
+                    window.materialChart = new Chart(document.getElementById('materialTrendChart').getContext('2d'), { 
+                        type:'line', 
+                        data:{ labels: ms.map(window.formatThaiMonth), datasets: datasets }, 
+                        options:{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false }
+                        } 
+                    });
                 };
 
                 // --- K-Index Cloud Overrides ---
