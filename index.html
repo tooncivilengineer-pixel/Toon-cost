@@ -125,7 +125,7 @@
                         <select id="fuelProvince" class="border border-gray-300 rounded px-1 py-1 text-[0.7rem] text-gray-700 focus:border-red-500 bg-gray-50">
                             <option value="กรุงเทพมหานคร">กทม.</option><option value="พิษณุโลก" selected>พิษณุโลก</option><option value="สุโขทัย">สุโขทัย</option><option value="อุตรดิตถ์">อุตรดิตถ์</option><option value="พิจิตร">พิจิตร</option><option value="เพชรบูรณ์">เพชรบูรณ์</option><option value="กำแพงเพชร">กำแพงเพชร</option><option value="นครสวรรค์">นครสวรรค์</option>
                         </select>
-                        <button id="btnFetchFuel" onclick="window.checkProvincialFuel()" class="text-[0.7rem] bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold py-1.5 px-2 rounded transition shadow-sm flex items-center border border-red-200 hover:border-red-600" title="เช็คราคาน้ำมันจากเว็บไซต์ ปตท."><i class="fa-solid fa-gas-pump mr-1"></i>เช็คเว็บ ปตท.</button>
+                        <button id="btnFetchFuel" onclick="window.open('https://www.pttor.com/th/oil_price', '_blank')" class="text-[0.7rem] bg-red-50 hover:bg-red-600 hover:text-white text-red-600 font-bold py-1.5 px-2 rounded transition shadow-sm flex items-center border border-red-200 hover:border-red-600" title="เช็คราคาน้ำมันจากเว็บไซต์ ปตท."><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>เช็คเว็บ ปตท.</button>
                     </div>
                 </div>
                 
@@ -930,10 +930,6 @@
         window.loadFuelHistory = function() { let h = JSON.parse(localStorage.getItem('pso_fuel_history')) || ["29.94", "30.33", "32.94", "34.94", "50.29"]; const d = document.getElementById('fuelHistory'); if (d) { d.innerHTML = ''; h.forEach(p => { d.innerHTML += `<option value="${p}">`; }); } };
         window.saveFuelPriceToHistory = function(p) { if (!p || isNaN(parseFloat(p))) return; p = parseFloat(p).toFixed(2); let h = JSON.parse(localStorage.getItem('pso_fuel_history')) || ["29.94", "30.33", "32.94", "34.94", "50.29"]; if (!h.includes(p)) { h.unshift(p); if (h.length > 10) h.pop(); localStorage.setItem('pso_fuel_history', JSON.stringify(h)); window.loadFuelHistory(); } };
         window.updateHeaders = function() { window.saveFuelPriceToHistory(document.getElementById('oldFuelPrice').value); window.saveFuelPriceToHistory(document.getElementById('newFuelPrice').value); document.getElementById('headerOldPrice').innerText = `(น้ำมัน ${document.getElementById('oldFuelPrice').value})`; document.getElementById('headerNewPrice').innerText = `(น้ำมัน ${document.getElementById('newFuelPrice').value})`; window.calculateTotals(); };
-        window.checkProvincialFuel = async function() {
-            const btn=document.getElementById('btnFetchFuel'); const og=btn.innerHTML; btn.innerHTML='<i class="fa-spin"></i>...'; btn.disabled=true;
-            try{ const r=await fetch('https://api.chnwt.dev/thai-oil-api/latest'); const d=await r.json(); let p=null; if(d.response?.stations?.ptt){ const k=Object.keys(d.response.stations.ptt).find(x=>x.toLowerCase().includes('diesel')); if(k)p=d.response.stations.ptt[k].price; } if(p) window.showDialog(`ดีเซล กทม. ล่าสุด: <b>${p} บาท</b>`); } catch(e){ window.showDialog("ขัดข้อง เช็คเว็บ ปตท. เองครับ", false); } btn.innerHTML=og; btn.disabled=false;
-        };
 
         // 5. ระบบตาราง K-Value
         window.getKDatabaseEntry = function(yyyy_mm) { if (!yyyy_mm) return null; if (window.cloudKIndices && window.cloudKIndices[yyyy_mm]) { return { source: 'cloud', data: window.cloudKIndices[yyyy_mm] }; } return null; };
