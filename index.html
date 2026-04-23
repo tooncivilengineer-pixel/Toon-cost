@@ -40,6 +40,7 @@
             body.print-modal-only .overflow-y-auto { overflow: visible !important; }
             body.print-modal-only table { width: 100% !important; border-collapse: collapse !important; }
             body.print-modal-only th, body.print-modal-only td { border: 1px solid #9ca3af !important; }
+            body.print-modal-only #masterSummaryTable tfoot { display: table-row-group !important; }
 
             body.print-k-value #mainContainer, body.print-k-value #masterSummaryModal, body.print-k-value #kIndexAdminModal, body.print-k-value #kIndexTableModal, body.print-k-value #projectModal, body.print-k-value #materialPriceModal, body.print-k-value #materialFileListModal, body.print-k-value #costCalcModal { display: none !important; }
             body.print-k-value #kValueModal { position: relative !important; inset: auto !important; background: white !important; display: block !important; padding: 0 !important; }
@@ -77,6 +78,7 @@
                     <button onclick="window.saveProjectToCloud()" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="บันทึกข้อมูลขึ้นเซิร์ฟเวอร์ส่วนกลาง"><i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกข้อมูล</button>
                     <button onclick="window.openProjectModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="เปิดดูรายการโครงการทั้งหมดจากทุกอำเภอ"><i class="fa-solid fa-folder-open mr-1"></i> เปิดแฟ้มข้อมูล</button>
                     <button onclick="window.openMasterSummaryModal()" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="ดูตารางสรุปยอดรวมงบประมาณของทุกโครงการ"><i class="fa-solid fa-table-list mr-1"></i> สรุปทุกโครงการ</button>
+                    <button onclick="window.openCostCalcModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="เครื่องมือคำนวณราคากลางงานทางตามหลักเกณฑ์"><i class="fa-solid fa-road mr-1"></i> คำนวณราคากลาง</button>
                     <button onclick="window.openKValueModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="เครื่องมือคำนวณเงินชดเชยค่าก่อสร้าง"><i class="fa-solid fa-calculator mr-1"></i> คำนวณค่า K</button>
                     <button onclick="window.open('https://www.gprocurement.go.th/new_index.html', '_blank')" class="bg-blue-800 hover:bg-blue-900 text-white font-semibold py-2 px-4 rounded shadow-sm transition text-sm mb-2 sm:mb-0" title="เข้าสู่เว็บไซต์ระบบจัดซื้อจัดจ้างภาครัฐ (e-GP) ของกรมบัญชีกลาง"><i class="fa-solid fa-globe mr-1"></i> ระบบ e-GP</button>
                     <div class="w-px h-8 bg-gray-300 mx-1 hidden sm:block"></div>
@@ -145,7 +147,7 @@
         
         <div class="mb-6 p-4 bg-white rounded-lg border border-gray-300 shadow-sm hidden md:block present-shadow-none" style="page-break-inside: avoid;">
             <div class="flex justify-between items-center mb-4 border-b border-gray-200 pb-2">
-                <h2 class="text-lg font-bold text-gray-800 border-l-4 border-sky-500 pl-2">กราฟเปรียบเทียบค่างานต้นทุนแต่ละหมวดงาน</h2>
+                <h2 class="text-lg font-bold text-gray-800 border-l-4 border-sky-500 pl-2">กราเปรียบเทียบค่างานต้นทุนแต่ละหมวดงาน</h2>
                 <select id="chartTypeSelector" onchange="window.calculateTotals()" class="border border-gray-300 rounded px-3 py-1 text-sm font-semibold text-gray-700 bg-gray-50 shadow-sm cursor-pointer hover:bg-gray-100 transition no-print no-present">
                     <option value="bar">📊 แบบแท่ง (Bar Chart)</option><option value="line">📈 แบบเส้น (Line Chart)</option>
                 </select>
@@ -573,6 +575,90 @@
         </div>
     </div>
 
+    <!-- 🌟 9. หน้าต่างคำนวณค่างานทาง (อ้างอิงเกณฑ์ ต.ค. 60) 🌟 -->
+    <div id="costCalcModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-[110] no-print">
+        <div class="bg-white rounded-lg p-6 max-w-4xl w-full shadow-2xl transform transition-all flex flex-col max-h-[95vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b pb-2 shrink-0">
+                <h3 class="text-xl font-bold text-amber-900"><i class="fa-solid fa-road text-amber-600 mr-2"></i>เครื่องมือคำนวณค่างานทาง (อ้างอิงหลักเกณฑ์ ต.ค. 60)</h3>
+                <button onclick="window.closeCostCalcModal()" class="text-gray-400 hover:text-red-500 text-2xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- ค่างานดำเนินการ -->
+                <div class="bg-green-50 rounded-xl p-5 border border-green-200">
+                    <h4 class="font-bold text-green-800 mb-3"><i class="fa-solid fa-tractor mr-1"></i> 1. ค่างานดำเนินการก่อสร้าง</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">ประเภทงาน:</label>
+                            <select id="calcWorkType" class="w-full border rounded px-3 py-2" onchange="window.calculateCostForm()">
+                                <option value="clear_light">งานถางป่าขุดตอ ขนาดเบา (1.54 บ./ตร.ม.)</option>
+                                <option value="clear_med">งานถางป่าขุดตอ ขนาดกลาง (3.18 บ./ตร.ม.)</option>
+                                <option value="clear_heavy">งานถางป่าขุดตอ ขนาดหนัก (4.73 บ./ตร.ม.)</option>
+                                <option value="earth_excavate">งานดินคันทาง ขุด-ขน (18.53 บ./ลบ.ม.)</option>
+                                <option value="earth_compact">งานดินคันทาง บดทับ (39.17 บ./ลบ.ม.)</option>
+                            </select>
+                            <p class="text-[0.65rem] text-gray-500 mt-1">*อ้างอิงตารางค่าดำเนินการฯ น้ำมัน 15.00 - 15.99 บ./ลิตร</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">ปริมาณงาน:</label>
+                            <input type="number" id="calcWorkQty" value="1000" class="w-full border rounded px-3 py-2 focus:border-amber-500" oninput="window.calculateCostForm()">
+                        </div>
+                        <div class="mt-2 text-right">
+                            <span class="text-sm text-gray-600 font-bold">ค่างานส่วนนี้: </span>
+                            <span class="text-lg font-bold text-green-700" id="calcDirectWorkCost">0.00</span>
+                            <span class="text-sm text-gray-600"> บาท</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ค่าขนส่ง -->
+                <div class="bg-blue-50 rounded-xl p-5 border border-blue-200">
+                    <h4 class="font-bold text-blue-800 mb-3"><i class="fa-solid fa-truck mr-1"></i> 2. ค่าขนส่งวัสดุก่อสร้าง</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">ระยะทางขนส่ง (กม.):</label>
+                            <input type="number" id="calcDist" value="5" min="0" class="w-full border rounded px-3 py-2 focus:border-amber-500" oninput="window.calculateCostForm()">
+                            <p class="text-[0.65rem] text-gray-500 mt-1">*อ้างอิงรถ 6 ล้อ ที่ราบ ผิวลาดยาง (20.00-20.99 บ./ลิตร)</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">ปริมาณวัสดุ (ลบ.ม.):</label>
+                            <input type="number" id="calcTransQty" value="0" class="w-full border rounded px-3 py-2 focus:border-amber-500" oninput="window.calculateCostForm()">
+                        </div>
+                        <div class="mt-2 text-right">
+                            <span class="text-sm text-gray-600 font-bold">ค่าขนส่งส่วนนี้: </span>
+                            <span class="text-lg font-bold text-blue-700" id="calcDirectTransCost">0.00</span>
+                            <span class="text-sm text-gray-600"> บาท</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="mt-6 bg-gray-800 rounded-xl p-5 text-white shadow-inner">
+                <h4 class="font-bold text-amber-400 mb-4 border-b border-gray-600 pb-2"><i class="fa-solid fa-calculator mr-1"></i> 3. สรุปราคากลาง</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-gray-700 p-3 rounded-lg text-center">
+                        <div class="text-xs text-gray-300 mb-1">รวมค่างานต้นทุน (Direct Cost)</div>
+                        <div class="text-xl font-bold thai-number" id="calcTotalDirect">0.00</div>
+                    </div>
+                    <div class="bg-gray-700 p-3 rounded-lg">
+                        <label class="block text-xs text-gray-300 mb-1 text-center">Factor F (ค่างานทาง)</label>
+                        <input type="number" id="calcFactorF" value="1.3624" step="0.0001" class="w-full bg-gray-600 border border-gray-500 rounded px-2 py-1 text-center text-white focus:border-amber-400" oninput="window.calculateCostForm()">
+                    </div>
+                    <div class="bg-amber-900/50 p-3 rounded-lg border border-amber-600 text-center">
+                        <div class="text-xs text-amber-200 mb-1">ราคากลางสุทธิ (พร้อมบวก Factor F)</div>
+                        <div class="text-2xl font-bold text-amber-400 thai-number" id="calcMedianPrice">0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end mt-6 gap-3">
+                <button onclick="window.closeCostCalcModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded transition">ยกเลิก</button>
+                <button onclick="window.insertCostToMainTable()" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-6 rounded shadow-md transition"><i class="fa-solid fa-plus mr-1"></i> นำเข้าสู่ตารางหลัก</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 🌟 ส่วนระบบประมวลผล (JavaScript ล้วน ไม่พึ่ง Cloud) 🌟 -->
     <script>
         window.myChart = null; window.ecoChart = null; window.indexTrendChart = null; window.materialChart = null;
@@ -636,6 +722,61 @@
                     </td>
                 </tr>`;
             });
+        };
+
+        // 🌟 ฟังก์ชันคำนวณราคากลาง 🌟
+        window.currentCalcResult = null;
+        window.openCostCalcModal = function() {
+            document.getElementById('costCalcModal').classList.remove('hidden');
+            window.calculateCostForm();
+        };
+        window.closeCostCalcModal = function() {
+            document.getElementById('costCalcModal').classList.add('hidden');
+        };
+        window.calculateCostForm = function() {
+            const workType = document.getElementById('calcWorkType').value;
+            const workQty = parseFloat(document.getElementById('calcWorkQty').value) || 0;
+            const rates = {
+                'clear_light': { rate: 1.54, name: 'งานถางป่าขุดตอ ขนาดเบา' },
+                'clear_med': { rate: 3.18, name: 'งานถางป่าขุดตอ ขนาดกลาง' },
+                'clear_heavy': { rate: 4.73, name: 'งานถางป่าขุดตอ ขนาดหนัก' },
+                'earth_excavate': { rate: 18.53, name: 'งานดินคันทาง (ขุด-ขน)' },
+                'earth_compact': { rate: 39.17, name: 'งานดินคันทาง (บดทับ)' }
+            };
+            const workRate = rates[workType].rate;
+            const directWorkCost = workRate * workQty;
+
+            const dist = Math.floor(parseFloat(document.getElementById('calcDist').value) || 0);
+            const transQty = parseFloat(document.getElementById('calcTransQty').value) || 0;
+            let transRate = 0;
+            if (dist > 0) {
+                // อ้างอิงจากตาราง PDF ค่าขนส่ง
+                const tRates = {1:18.63, 2:20.59, 3:22.55, 4:24.52, 5:26.48, 6:28.44, 7:31.34, 8:35.35};
+                if (tRates[dist]) transRate = tRates[dist];
+                else transRate = 35.35 + ((dist - 8) * 3.5); // ใช้การประมาณค่าสำหรับระยะทางที่มากกว่า 8 กม.
+            }
+            const directTransCost = transRate * transQty;
+
+            const totalDirect = directWorkCost + directTransCost;
+            const factorF = parseFloat(document.getElementById('calcFactorF').value) || 1.3624;
+            const medianPrice = totalDirect * factorF;
+
+            document.getElementById('calcDirectWorkCost').innerText = window.formatNumber(directWorkCost);
+            document.getElementById('calcDirectTransCost').innerText = window.formatNumber(directTransCost);
+            document.getElementById('calcTotalDirect').innerText = window.formatNumber(totalDirect);
+            document.getElementById('calcMedianPrice').innerText = window.formatNumber(medianPrice);
+
+            window.currentCalcResult = {
+                name: rates[workType].name + (transQty > 0 ? ` (รวมค่าขนส่ง ${dist} กม.)` : ''),
+                cost: medianPrice
+            };
+        };
+        window.insertCostToMainTable = function() {
+            if(window.currentCalcResult) {
+                window.addRow(window.currentCalcResult.name, window.currentCalcResult.cost, window.currentCalcResult.cost, 'คำนวณจากเกณฑ์ราคากลาง ต.ค. 60');
+                window.closeCostCalcModal();
+                window.showDialog("✅ นำเข้าข้อมูลสู่ตารางหลักเรียบร้อยแล้ว");
+            }
         };
 
         window.kFormulasDef = {
@@ -930,6 +1071,10 @@
         window.loadFuelHistory = function() { let h = JSON.parse(localStorage.getItem('pso_fuel_history')) || ["29.94", "30.33", "32.94", "34.94", "50.29"]; const d = document.getElementById('fuelHistory'); if (d) { d.innerHTML = ''; h.forEach(p => { d.innerHTML += `<option value="${p}">`; }); } };
         window.saveFuelPriceToHistory = function(p) { if (!p || isNaN(parseFloat(p))) return; p = parseFloat(p).toFixed(2); let h = JSON.parse(localStorage.getItem('pso_fuel_history')) || ["29.94", "30.33", "32.94", "34.94", "50.29"]; if (!h.includes(p)) { h.unshift(p); if (h.length > 10) h.pop(); localStorage.setItem('pso_fuel_history', JSON.stringify(h)); window.loadFuelHistory(); } };
         window.updateHeaders = function() { window.saveFuelPriceToHistory(document.getElementById('oldFuelPrice').value); window.saveFuelPriceToHistory(document.getElementById('newFuelPrice').value); document.getElementById('headerOldPrice').innerText = `(น้ำมัน ${document.getElementById('oldFuelPrice').value})`; document.getElementById('headerNewPrice').innerText = `(น้ำมัน ${document.getElementById('newFuelPrice').value})`; window.calculateTotals(); };
+        window.checkProvincialFuel = async function() {
+            const btn=document.getElementById('btnFetchFuel'); const og=btn.innerHTML; btn.innerHTML='<i class="fa-spin"></i>...'; btn.disabled=true;
+            try{ const r=await fetch('https://api.chnwt.dev/thai-oil-api/latest'); const d=await r.json(); let p=null; if(d.response?.stations?.ptt){ const k=Object.keys(d.response.stations.ptt).find(x=>x.toLowerCase().includes('diesel')); if(k)p=d.response.stations.ptt[k].price; } if(p) window.showDialog(`ดีเซล กทม. ล่าสุด: <b>${p} บาท</b>`); } catch(e){ window.showDialog("ขัดข้อง เช็คเว็บ ปตท. เองครับ", false); } btn.innerHTML=og; btn.disabled=false;
+        };
 
         // 5. ระบบตาราง K-Value
         window.getKDatabaseEntry = function(yyyy_mm) { if (!yyyy_mm) return null; if (window.cloudKIndices && window.cloudKIndices[yyyy_mm]) { return { source: 'cloud', data: window.cloudKIndices[yyyy_mm] }; } return null; };
