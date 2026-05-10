@@ -256,7 +256,7 @@
                     <div><h3 class="text-xl font-bold text-gray-900">ระบบสืบค้นดัชนีและคำนวณค่า K อัตโนมัติ</h3></div>
                 </div>
                 <div class="flex gap-2 items-center flex-wrap justify-end">
-                    <button onclick="window.openMaterialPriceModal()" class="bg-emerald-100 hover:bg-emerald-600 hover:text-white text-emerald-700 font-semibold py-2 px-4 rounded shadow-sm transition text-sm flex items-center"><i class="fa-solid fa-tags mr-2"></i> ฐานข้อมูลราคากลางวัสดุ</button>
+                    <button onclick="window.openMaterialPriceModal()" class="bg-emerald-100 hover:bg-emerald-600 hover:text-white text-emerald-700 font-semibold py-2 px-4 rounded shadow-sm transition text-sm flex items-center"><i class="fa-solid fa-tags mr-2"></i> ฐานข้อมูลราคากลางวัสดุก่อสร้าง</button>
                     <button onclick="window.openKIndexAdminModal()" class="bg-indigo-100 hover:bg-indigo-600 hover:text-white text-indigo-700 font-semibold py-2 px-4 rounded shadow-sm transition text-sm flex items-center"><i class="fa-solid fa-database mr-2"></i> ฐานข้อมูลดัชนี</button>
                     <button onclick="window.closeKValueModal()" class="text-gray-400 hover:text-red-500 text-2xl ml-2"><i class="fa-solid fa-xmark"></i></button>
                 </div>
@@ -1129,7 +1129,7 @@
             d.slice(0,100).forEach(i=>{
                 if(!i.id) i.id='mat_'+Date.now()+'_'+Math.random().toString(36).substring(2,7);
                 const pNum=parseFloat(i.price); const pDisplay=!isNaN(pNum)?window.formatNumber(pNum):window.escapeHTML(i.price); const copyName = String(i.name).replace(/'/g, "\\'"); const copyText = `${copyName}\\t${pDisplay}`;
-                tb.innerHTML+=`<tr class="hover:bg-teal-50"><td class="p-1 border-r border-teal-200"><input type="text" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-xs text-center" value="${window.escapeHTML(i.code||'')}" onchange="window.updateMaterialRow('${i.id}','code',this)"></td><td class="p-1 border-r border-teal-200"><input type="text" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-sm font-medium" value="${window.escapeHTML(i.name)}" onchange="window.updateMaterialRow('${i.id}','name',this)"></td><td class="p-1 border-r border-teal-200"><input type="text" inputmode="decimal" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-right font-bold text-teal-700" value="${pDisplay}" onfocus="this.select()" onchange="window.updateMaterialRow('${i.id}','price',this)"></td><td class="p-1 border-r border-teal-200"><input type="text" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-xs text-center" value="${window.escapeHTML(i.unit||'')}" onchange="window.updateMaterialRow('${i.id}','unit',this)"></td><td class="p-2 text-center flex justify-center gap-1"><button onclick="window.showMaterialTrend('${copyName}')" class="text-teal-500 hover:bg-teal-100 p-1.5 rounded" title="กราฟเปรียบเทียบ"><i class="fa-solid fa-chart-line"></i></button><button onclick="window.copyTextToClipboard('${copyText}')" class="text-blue-500 hover:bg-blue-100 p-1.5 rounded" title="คัดลอก"><i class="fa-solid fa-copy"></i></button><button onclick="window.deleteMaterialRow('${i.id}')" class="text-red-400 hover:bg-red-100 p-1.5 rounded" title="ลบ"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
+                tb.innerHTML+=`<tr class="hover:bg-teal-50"><td class="p-1 border-r border-teal-200"><input type="text" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-xs text-center" value="${window.escapeHTML(i.code||'')}" onchange="window.updateMaterialRow('${i.id}','code',this)"></td><td class="p-1 border-r border-teal-200"><input type="text" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-sm font-medium" value="${window.escapeHTML(i.name)}" onchange="window.updateMaterialRow('${i.id}','name',this)"></td><td class="p-1 border-r border-teal-200"><input type="text" inputmode="decimal" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-right font-bold text-teal-700" value="${pDisplay}" onfocus="this.select()" onchange="window.updateMaterialRow('${i.id}','price',this)"></td><td class="p-1 border-r border-teal-200"><input type="text" class="w-full bg-transparent hover:border-gray-300 focus:bg-white rounded px-2 py-1 text-xs text-center" value="${window.escapeHTML(i.unit||'')}" onchange="window.updateMaterialRow('${i.id}','unit',this)"></td><td class="p-2 text-center flex justify-center gap-1"><button onclick="window.showMaterialTrend('${copyName}')" class="text-teal-500 hover:bg-teal-100 p-1.5 rounded" title="กราฟเปรียเปรียบเทียบ"><i class="fa-solid fa-chart-line"></i></button><button onclick="window.copyTextToClipboard('${copyText}')" class="text-blue-500 hover:bg-blue-100 p-1.5 rounded" title="คัดลอก"><i class="fa-solid fa-copy"></i></button><button onclick="window.deleteMaterialRow('${i.id}')" class="text-red-400 hover:bg-red-100 p-1.5 rounded" title="ลบ"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
             });
             document.getElementById('materialCount').innerText=`พบ: ${window.formatNumber(d.length)} รายการ`;
         };
@@ -1175,7 +1175,7 @@
     </script>
 
     <!-- ========================================================================= -->
-    <!-- 🔵 SCRIPT 2: ระบบคลาวด์ Firebase (โหลดเบื้องหลัง ถ้าเน็ตบล็อก ระบบก็จะไม่พัง) 🔵 -->
+    <!-- 🔵 SCRIPT 2: ระบบคลาวด์ Firebase (เปลี่ยนเป็นกุญแจของ construction-ppao แล้ว) 🔵 -->
     <!-- ========================================================================= -->
     <script>
         async function initCloudDatabase() {
@@ -1184,9 +1184,17 @@
                 const fbAuth = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
                 const fbFs = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
 
+                // --- อัปเดตกุญแจ Firebase ของคุณที่นี่แล้วครับ! ---
                 const myCustomFirebaseConfig = {
-                    apiKey: "AIzaSyDovtAZBqZeHoeTwcQXvQ77U3bR4RAgjIM", authDomain: "recheck-92d43.firebaseapp.com", projectId: "recheck-92d43", storageBucket: "recheck-92d43.firebasestorage.app", messagingSenderId: "94609751419", appId: "1:94609751419:web:1100cab6d2fc1426d311de"
+                    apiKey: "AIzaSyDSHLJFvdudB3QR2oZA3gLLNUp5Ka7fVHc",
+                    authDomain: "construction-ppao.firebaseapp.com",
+                    projectId: "construction-ppao",
+                    storageBucket: "construction-ppao.firebasestorage.app",
+                    messagingSenderId: "976092696551",
+                    appId: "1:976092696551:web:dfcd5d6201d47f61ce3742",
+                    measurementId: "G-19K5Y7YSH0"
                 };
+                
                 const appId = 'cost-app-v1';
                 let db = null; let auth = null; let currentUser = null;
 
@@ -1225,12 +1233,12 @@
                 });
 
                 window.saveProjectToCloud = async function(silent = false) {
-                    if (!currentUser || !db) { window.showDialog("ระบบคลาวด์ยังไม่เชื่อมต่อครับ"); return; }
+                    if (!db) { window.showDialog("ระบบคลาวด์ยังไม่เชื่อมต่อครับ"); return; }
                     const pName = document.getElementById('projectName').value.trim(); if (!pName) { if(!silent) window.showDialog("กรุณาระบุชื่อโครงการ"); return; }
                     const rows = []; document.querySelectorAll('#tableBody tr').forEach(tr => { const tn = tr.querySelector('td:nth-child(1) input').value; if(tn.trim() !== '') rows.push({ taskName: tn, oldCost: window.unformatNumber(tr.querySelector('.old-cost').value), newCost: window.unformatNumber(tr.querySelector('.new-cost').value), remark: tr.querySelector('td:nth-child(5) input').value }); });
                     if (rows.length === 0) rows.push({taskName: "", oldCost: 0, newCost: 0, remark: ""});
                     const pId = window.currentProjectId || 'proj_' + Date.now();
-                    const data = { id: pId, projectName: pName, districtName: document.getElementById('districtName').value, oldFuelPrice: document.getElementById('oldFuelPrice').value, newFuelPrice: document.getElementById('newFuelPrice').value, chartType: document.getElementById('chartTypeSelector').value, totalCost: document.getElementById('totalNew').innerText, allocatedBudget: document.getElementById('allocatedBudget').value, rows: rows, kValueData: { contractor: document.getElementById('kContractor')?.value||'', contractNo: document.getElementById('kContractNo')?.value||'', contractValue: document.getElementById('kContractValue')?.value||'', startDate: document.getElementById('kStartDate')?.value||'', endDate: document.getElementById('kEndDate')?.value||'', installment: document.getElementById('kInstallment')?.value||'last', deliveryDate: document.getElementById('kDeliveryDate')?.value||'', baseMonth: document.getElementById('kBaseMonth')?.value||'', targetMonth: document.getElementById('kTargetMonth')?.value||'', items: window.getKValueItems(), calculatedComp: window.globalKCompensation }, updatedAt: new Date().toLocaleString('th-TH'), timestamp: Date.now(), ownerUid: currentUser.uid };
+                    const data = { id: pId, projectName: pName, districtName: document.getElementById('districtName').value, oldFuelPrice: document.getElementById('oldFuelPrice').value, newFuelPrice: document.getElementById('newFuelPrice').value, chartType: document.getElementById('chartTypeSelector').value, totalCost: document.getElementById('totalNew').innerText, allocatedBudget: document.getElementById('allocatedBudget').value, rows: rows, kValueData: { contractor: document.getElementById('kContractor')?.value||'', contractNo: document.getElementById('kContractNo')?.value||'', contractValue: document.getElementById('kContractValue')?.value||'', startDate: document.getElementById('kStartDate')?.value||'', endDate: document.getElementById('kEndDate')?.value||'', installment: document.getElementById('kInstallment')?.value||'last', deliveryDate: document.getElementById('kDeliveryDate')?.value||'', baseMonth: document.getElementById('kBaseMonth')?.value||'', targetMonth: document.getElementById('kTargetMonth')?.value||'', items: window.getKValueItems(), calculatedComp: window.globalKCompensation }, updatedAt: new Date().toLocaleString('th-TH'), timestamp: Date.now(), ownerUid: currentUser ? currentUser.uid : 'anonymous' };
                     try { await fbFs.setDoc(fbFs.doc(db, 'artifacts', appId, 'public', 'data', 'cost_breakdown_projects', pId), data); window.currentProjectId = pId; if(!silent) window.showDialog("✅ บันทึกข้อมูลขึ้นระบบคลาวด์เรียบร้อยแล้วครับ"); } catch(e) { window.showDialog("❌ บันทึกไม่สำเร็จ"); }
                 };
 
@@ -1329,7 +1337,7 @@
                             province: p, 
                             month: m, 
                             updatedAt: new Date().toLocaleString('th-TH'), 
-                            updatedBy: currentUser.uid, 
+                            updatedBy: currentUser ? currentUser.uid : 'anonymous', 
                             items: window.globalMaterialData
                         }); 
                         window.materialDocsCache=null; 
@@ -1352,7 +1360,7 @@
                             month: m,
                             items: window.tipcoMaterialData,
                             updatedAt: new Date().toLocaleString('th-TH'),
-                            updatedBy: currentUser.uid
+                            updatedBy: currentUser ? currentUser.uid : 'anonymous'
                         });
                         window.materialDocsCache=null;
                         window.showDialog(`✅ บันทึกแฟ้ม <b>ราคายางทิปโก้ เดือน ${window.formatThaiMonth(m)}</b> แยกสำเร็จ!<br><br><span class="text-sm text-gray-500">บันทึกพร้อมตารางข้อมูล ${window.tipcoMaterialData.length} รายการ</span>`);
@@ -1377,7 +1385,6 @@
                     }); 
                 };
                 
-                // 🌟 อัปเดตส่วนสร้างกราฟเปรียบเทียบ 🌟
                 window.currentTrendMaterial1 = null;
 
                 window.showMaterialTrend = async function(n) {
@@ -1486,7 +1493,6 @@
                         addData(mD2_Tipco, `${n2} (ทิปโก้)`, '#9333ea', 'rgba(147, 51, 234, 0.1)', [5, 5]); // Purple
                     }
 
-                    // --- เพิ่มการคำนวณเปอร์เซ็นต์ความแตกต่าง ---
                     const summaryContainer = document.getElementById('materialCompareSummary');
                     if (summaryContainer) {
                         if (datasets.length >= 2) {
@@ -1495,7 +1501,6 @@
                             const d2 = datasets[1];
                             let matchIdx = -1;
                             
-                            // หาเดือนล่าสุดที่มีข้อมูลตรงกันทั้งสองฝั่ง
                             for (let i = ms.length - 1; i >= 0; i--) {
                                 if (d1.data[i] !== null && d2.data[i] !== null) {
                                     matchIdx = i;
@@ -1538,7 +1543,6 @@
                             summaryContainer.classList.add('hidden');
                         }
                     }
-                    // --- จบการคำนวณ ---
 
                     window.materialChart = new Chart(document.getElementById('materialTrendChart').getContext('2d'), { 
                         type:'line', 
@@ -1561,7 +1565,7 @@
                 window.saveKIndexToCloud = async function() {
                     const m = document.getElementById('adminIndexMonth').value; if(!m || !db) return;
                     const d = {}; window.kIndexOrder.forEach(k => { const v = parseFloat(document.getElementById(`adminIdx_${k}`).value); if(!isNaN(v)) d[k] = v; });
-                    if(Object.keys(d).length === 0) return; d.updatedAt = new Date().toLocaleString('th-TH'); d.updatedBy = currentUser.uid;
+                    if(Object.keys(d).length === 0) return; d.updatedAt = new Date().toLocaleString('th-TH'); d.updatedBy = currentUser ? currentUser.uid : 'anonymous';
                     try { await fbFs.setDoc(fbFs.doc(db, 'artifacts', appId, 'public', 'data', 'k_indices', m), d, { merge: true }); window.showDialog(`✅ บันทึกดัชนี ${window.formatThaiMonth(m)} สำเร็จ!`); window.closeKIndexAdminModal(); } catch(e) {}
                 };
                 
@@ -1573,7 +1577,7 @@
                         let s = 0;
                         for(const row of json) {
                             let mStr = row["เดือน-ปี (YYYY-MM)"]; if(mStr && String(mStr).match(/^\d{4}-\d{2}$/)) {
-                                const idxData = { updatedAt: new Date().toLocaleString('th-TH'), updatedBy: currentUser.uid };
+                                const idxData = { updatedAt: new Date().toLocaleString('th-TH'), updatedBy: currentUser ? currentUser.uid : 'anonymous' };
                                 window.kIndexOrder.forEach(k => { idxData[k] = parseFloat(row[k]) || 0; });
                                 await fbFs.setDoc(fbFs.doc(db, 'artifacts', appId, 'public', 'data', 'k_indices', String(mStr)), idxData, { merge: true }); s++;
                             }
@@ -1637,9 +1641,9 @@
                 window.quickSaveIndex = async function(month, key, inputEl) {
                     let val = parseFloat(inputEl.value);
                     if (isNaN(val) || val === 0) { inputEl.value = ''; inputEl.classList.add('bg-red-50','border-red-300','text-red-600'); val = 0; } else { inputEl.value = val.toFixed(1); inputEl.classList.remove('bg-red-50','border-red-300','text-red-600'); }
-                    if (!currentUser || !db) return;
+                    if (!db) return;
                     try {
-                        const updateData = { updatedAt: new Date().toLocaleString('th-TH'), updatedBy: currentUser.uid, [key]: val };
+                        const updateData = { updatedAt: new Date().toLocaleString('th-TH'), updatedBy: currentUser ? currentUser.uid : 'anonymous', [key]: val };
                         await fbFs.setDoc(fbFs.doc(db, 'artifacts', appId, 'public', 'data', 'k_indices', month), updateData, { merge: true });
                         if(!window.cloudKIndices[month]) window.cloudKIndices[month] = {}; window.cloudKIndices[month][key] = val;
                         if (document.getElementById('indexTrendChart')) window.renderIndexTrendChart();
